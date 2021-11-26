@@ -164,7 +164,7 @@ $(document).ready(function(){
             var strlog = strDateTime + " " + stream.peerId + " joined now.\n";
             $("#textarea_Skyway_log").val($("#textarea_Skyway_log").val()+strlog ); 
             
-            if(stream.id.indexOf("monitor")!=-1){//モニター端末                  
+            if(stream.peerId.indexOf("monitor")!=-1){//モニター端末                  
 
             }else{//実験室端末からの動画
                 //動画を追加する video要素のid はpeeridにする
