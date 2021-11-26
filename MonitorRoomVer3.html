@@ -216,7 +216,7 @@ $(document).ready(function(){
             console.log(peersList);
             //peerがいなくなったときには録画を押せないようにする
             if(peersList.length == 0){
-                $("#Button_record").prop("disabled",false);//録画ボタンを押せないようにする               
+                $("#Button_record").prop("disabled",true);//録画ボタンを押せないようにする               
             }
 
             //キャンバスのサイズを変更
@@ -242,7 +242,7 @@ $(document).ready(function(){
         $("#my-video").prop("hidden",false);//自分のビデオを表示にする
         $("#my-video").prop("muted",false);//自分のビデオの声のミュートを解除する（あくまで自分のPC上でだけ） 
         $("#Button_make-call").prop("disabled",false);//「参加」ボタンは押せるようにする
-        $("#Button_record").prop("disabled",false);//録画ボタンを押せないようにする
+        $("#Button_record").prop("disabled",true);//録画ボタンを押せないようにする
         var ctx = $("#canvas").get(0).getContext('2d');//Canvasをクリア
         ctx.clearRect(0, 0, ctx.canvas.clientWidth, ctx.canvas.clientHeight);
         $("#P_"+myid).remove();//自分のid表示をクリア
