@@ -220,7 +220,7 @@ $(document).ready(function(){
             //退出したことを報告 
             var DateTime = getDateString();
             var strDateTime = DateTime["y"]+"/"+DateTime["m"]+"/"+DateTime["d"]+" "+DateTime["h"]+":"+DateTime["min"];
-            var strlog = strDateTime + " " + stream.peerId + " leaved now.\n";
+            var strlog = strDateTime + " " + peerId + " leaved now.\n";
             //$('#RoomContents').append(peerDom);
             $("#textarea_Skyway_log").val($("#textarea_Skyway_log").val()+strlog ); 
         });
