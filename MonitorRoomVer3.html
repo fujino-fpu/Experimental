@@ -29,8 +29,8 @@
         </p>
     </div>
     <div id ="RecordControl">
-        <button id="record" disabled="true">録画</button>
-        <button id="recordstop" disabled="true">停止</button>
+        <button id="Button_record" disabled="true">録画</button>
+        <button id="Button_recordstop" disabled="true">停止</button>
     </div> 
     <div id = "Canvas">
         <canvas id="canvas"></canvas>
@@ -189,8 +189,8 @@ $(document).ready(function(){
                 canvasResize(peersList);
 
                 ///録画ボタンが押せないなら押せるようにする/
-                if( $("#record").prop("disabled")==true ){
-                    $("#record").prop("disabled",false);
+                if( $("#Button_record").prop("disabled")==true ){
+                    $("#Button_record").prop("disabled",false);
                 };//録画ボタンをおせるようにする
 
             }
@@ -213,7 +213,11 @@ $(document).ready(function(){
 
             //peerListから削除
             peersList.splice( peersList.indexOf(peerId), 1);
-            console.log(peersList)
+            console.log(peersList);
+            //peerがいなくなったときには録画を押せないようにする
+            if(peersList.length == 0){
+                $("#Button_record").prop("disabled",false);//録画ボタンを押せないようにする               
+            }
 
             //キャンバスのサイズを変更
             canvasResize(peersList);
@@ -238,6 +242,7 @@ $(document).ready(function(){
         $("#my-video").prop("hidden",false);//自分のビデオを表示にする
         $("#my-video").prop("muted",false);//自分のビデオの声のミュートを解除する（あくまで自分のPC上でだけ） 
         $("#Button_make-call").prop("disabled",false);//「参加」ボタンは押せるようにする
+        $("#Button_record").prop("disabled",false);//録画ボタンを押せないようにする
         var ctx = $("#canvas").get(0).getContext('2d');//Canvasをクリア
         ctx.clearRect(0, 0, ctx.canvas.clientWidth, ctx.canvas.clientHeight);
         $("#P_"+myid).remove();//自分のid表示をクリア
@@ -306,19 +311,19 @@ $(document).ready(function(){
 //  録画処理
 //************************************
     //録画スタートボタン
-    $("#record").on("click", function(){
-        $("#record").text("録画中");
-        $("#record").prop("disabled",true);
-        $("#recordstop").prop("disabled",false);
+    $("#Button_record").on("click", function(){
+        $("#Button_record").text("録画中");
+        $("#Button_record").prop("disabled",true);
+        $("#Button_recordstop").prop("disabled",false);
         mixVideoAudio();
         startRecording();
     });
 
     //録画停止ボタン
-    $("#recordstop").on("click", function(){
-        $("#record").text("録画");
-        $("#record").prop("disabled",false);
-        $("#recordstop").prop("disabled",true);
+    $("#Button_recordstop").on("click", function(){
+        $("#Button_record").text("録画");
+        $("#Button_record").prop("disabled",false);
+        $("#Button_recordstop").prop("disabled",true);
         stopRecording();
         download();
     });
