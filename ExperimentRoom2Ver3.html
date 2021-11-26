@@ -170,7 +170,7 @@
         $("#my-video").prop("muted",false);//自分のビデオの声のミュートを解除する（あくまで自分のPC上でだけ） 
 
         //再接続するときのために、peerを再度作っておく
-        myid = "monitor_"+Date.now();
+        myid = "Exp_"+Date.now();
         peer = new Peer(myid,{
             key: '5a37ac2c-1e41-4162-8ed7-c2ca8e4a712c',
             debug: 3
