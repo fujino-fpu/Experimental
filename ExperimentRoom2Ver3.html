@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.webrtc.ecl.ntt.com/skyway-4.4.2.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <title>実験室用SkyWay2</title>
+</head>
+<body>
+    <video id="my-video" width="400px" autoplay  playsinline></video>
+    <div id="controller">
+        <select sie=10 id = "VideoList">
+            <option value="0">不使用</option>
+        </select> 
+        <select sie=10 id = "AudioList">
+            <option value="0">不使用</option>
+        </select> 
+        <button id="local-Start">スタート</button> 
+        <button id="make-call" disabled>参加</button>
+        <button id="leave-call" disabled>退出</button>
+    </div>
+    <div id="RoomContents"></div>
+</body>
+
+<script>
+/****************
+ * マイクとカメラは自分で選択する
+ * モニター端末からの音声は受け付ける
+ * *****************/
+    let localStream; //自分のストリーム
+    let videoid= new Object();
+    let audioid= new Object();
+    //let PeerList = new Array(); // Peerのリスト
+    // 自分のカメラ映像取得出力
+    let vidList = new Array();
+    let audList = new Array();
+    navigator.mediaDevices.enumerateDevices()
+    .then(function(devices) {
+        devices.forEach(function(device) {
+            //console.log(device.kind + ": " + device.label + " id = " + device.deviceId);
+            if(device.kind == "videoinput"){// && device.label.indexOf("Logicool")!=-1){
+                vidList[device.label] = device.deviceId;
+                $("#VideoList").append($("<option>").html(device.label).val(device.deviceId))
+            }
+            
+            if(device.kind == "audioinput"){
+                $("#AudioList").append($("<option>").html(device.label).val(device.deviceId))
+            } 
+        });
+        console.log(vidList);
+        console.log(audList);
+    })
+    .catch(function(err) {
+        console.log("デバイスリストを取得できませんでした");
+    });
+
+
+    $("#local-Start").on("click", async function() {
+        const videoElm = document.getElementById('my-video');
+        videoElm.pause();
+        
+        let constraints = {
+            video:{deviceId: $("#VideoList").val(), width:640, height:480},//width:{ideal:1280, min:640}, height:{ideal:720, min:480}},
+            audio:{deviceId: $("#AudioList").val(), echoCancellation:true, noiseSuppression:true}
+        }
+        if($("#VideoList").val()==0){
+            constraints["video"]=false;
+        }
+        if($("#AudioList").val()==0){
+            constraints["audio"]=false;
+        }
+        if(constraints["audio"]==false && constraints["video"]==false){
+            alert("ビデオカメラ、マイクの両方が不使用になっています。少なくともいずれか一つは有効にしてください"); 
+            $("#make-call").prop("disabled",true);//最初「参加」ボタンは押せないが、メディアストリームが取得できるとボタンを押せるようになる
+            return;
+        }
+
+        try{
+            localStream = await navigator.mediaDevices.getUserMedia(constraints);     
+            videoElm.srcObject = localStream;
+            videoElm.play();
+
+            $("#make-call").prop("disabled",false);//最初「参加」ボタンは押せないが、メディアストリームが取得できるとボタンを押せるようになる
+        }
+        catch(error){
+                    // 失敗時にはエラーログを出力
+                console.error('mediaDevice.getUserMedia() error:', error);          
+                return;
+        }
+    })
+
+/****
+ * skywayの接続処理
+ * ******/
+
+    let peer;
+    let myid = "Exp_"+Date.now();
+    peer = new Peer(myid,{
+        key: '5a37ac2c-1e41-4162-8ed7-c2ca8e4a712c',
+        debug: 3
+    });  
+
+ 
+    // Room参加処理
+    document.getElementById('make-call').onclick = () => {
+        $("#local-Start").prop("disabled",true);//スタートボタンを押せなくする
+        const room = peer.joinRoom('FujinoLabsExperimentalRoom2', {mode:'sfu', stream: localStream});
+        setupCallEventHandlers(room)
+        $("#my-video").prop("hidden",true);
+        $("#my-video").prop("muted",true);
+        $("#make-call").prop("disabled",true);//スタートボタンを押せなくする
+        $("#leave-call").prop("disabled",false);//スタートボタンを押せるようにする
+
+     };
+
+    // イベントリスナを設置する関数 
+    function setupCallEventHandlers(room){
+        room.on('open',()=>{
+            const textDom = $("<p>");
+            textDom.attr("id", myid)
+            textDom.text("OpenRoom. my id is "+ myid);
+            $('#controller').append(textDom);
+        });//roomがオープンになった時の処理
+
+        room.on('peerJoin', peerId =>{
+
+        });//peerが入室してきたときの処理
+
+
+        room.on('stream', stream =>{//新しいstreamが入ってくる毎に実行される。streamはpeer.idが振られている。
+            const peerDom = $("<p>");
+            peerDom.text(stream.peerId + " joined now.");
+            $('#RoomContents').append(peerDom);   
+
+            if(stream.peerId.indexOf("monitor")!=-1){//モニター端末からの音声は飛んでくるはず
+                const audioDom = $('<audio autoplay>');
+                audioDom.attr('id', stream.peerId);
+                audioDom.get(0).srcObject = stream;
+                $('#RoomContents').append(audioDom);
+            }
+
+
+        });//streamが入ってきたときの処理
+
+        room.on('peerLeave', peerId=>{
+            //退出したことを報告
+            const peerDom = $("<p>");
+            peerDom.text(stream.peerId + " leaved now.");
+            $('#RoomContents').append(peerDom);  
+            if(stream.peerId.indexOf("Exp_")!=-1){
+                $("#"+peerId).remove();
+            } 
+        });
+    }
+
+    //退出をクリックする
+    $("#leave-call").on("click",function(){
+        peer.destroy();
+        $('#RoomContents').empty();
+        $("#leave-call").prop("disabled",true);//退出ボタンを押せないようにする
+        $("#local-Start").prop("disabled",false);//スタートボタンを押せるようにする
+        $("#make-call").prop("disabled",false);//「参加」ボタンは押せるようにする
+        $("#my-video").prop("hidden",false);//自分のビデオを表示にする
+        $("#my-video").prop("muted",false);//自分のビデオの声のミュートを解除する（あくまで自分のPC上でだけ） 
+
+        //再接続するときのために、peerを再度作っておく
+        myid = "monitor_"+Date.now();
+        peer = new Peer(myid,{
+            key: '5a37ac2c-1e41-4162-8ed7-c2ca8e4a712c',
+            debug: 3
+        });  
+    });
+
+</script>
+
+</html>
