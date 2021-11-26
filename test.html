@@ -7,11 +7,39 @@
   <title>SkyWayチュートリアル</title>
 </head>
 <body>
+  <select sie=10 id = "Select_VideoList"></select> 
+  <select sie=10 id = "Select_AudioList"></select> 
   <video id="my-video" width="400px" autoplay muted playsinline></video>
 </body>
 <script>
   let localStream;
 
+  
+  let vidList = new Array();
+  let audList = new Array();
+  navigator.mediaDevices.enumerateDevices().then(function(devices) {
+      devices.forEach(function(device) {
+          //console.log(device.kind + ": " + device.label + " id = " + device.deviceId);
+          if(device.kind == "videoinput"){// && device.label.indexOf("Logicool")!=-1){
+              vidList[device.label] = device.deviceId;
+              $("#Select_VideoList").append($("<option>").html(device.label).val(device.deviceId))
+          }
+
+          if(device.kind == "audioinput"){
+              audList[device.label] = device.deviceId;
+              $("#Select_AudioList").append($("<option>").html(device.label).val(device.deviceId))
+          } 
+      });
+      console.log(vidList);
+      console.log(audList);
+      $("#Select_VideoList").append($('<option value="0">不使用</option>'));
+      $("#Select_AudioList").append($('<option value="0">不使用</option>'));
+  }).catch(function(err) {
+      console.log("デバイスリストを取得できませんでした");
+      alert("デバイスリストを取得できませんでした");
+  });
+  
+  
   // カメラ映像取得
   navigator.mediaDevices.getUserMedia({video: true, audio: true})
     .then( stream => {
