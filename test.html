@@ -18,7 +18,7 @@
   let localStream;
 
   
-  function getDeviceList() {
+//   function getDeviceList() {
     let vidList = new Array();
     let audList = new Array();
     navigator.mediaDevices.enumerateDevices().then(function(devices) {
@@ -42,7 +42,7 @@
         console.log("デバイスリストを取得できませんでした");
         alert("デバイスリストを取得できませんでした");
     });
-  }
+//   }
   
   
   // カメラ映像取得
