@@ -238,9 +238,10 @@ $(document).ready(function(){
         $("#my-video").prop("hidden",false);//自分のビデオを表示にする
         $("#my-video").prop("muted",false);//自分のビデオの声のミュートを解除する（あくまで自分のPC上でだけ） 
         $("#Button_make-call").prop("disabled",false);//「参加」ボタンは押せるようにする
-        var ctx = $("#canvas").get(0).getContext('2d');
+        var ctx = $("#canvas").get(0).getContext('2d');//Canvasをクリア
         ctx.clearRect(0, 0, ctx.canvas.clientWidth, ctx.canvas.clientHeight);
-      
+        $("#P_"+myid).remove();//自分のid表示をクリア
+        
         //再接続するときのために、peerを再度作っておく
         myid = "monitor_"+Date.now();
         peer = new Peer(myid,{
