@@ -24,6 +24,7 @@
 </body>
 
 <script>
+ $(document).ready(function(){
 /****************
  * マイクとカメラは自分で選択する
  * モニター端末からの音声は受け付ける
@@ -33,27 +34,31 @@
     let audioid= new Object();
     //let PeerList = new Array(); // Peerのリスト
     // 自分のカメラ映像取得出力
-    let vidList = new Array();
-    let audList = new Array();
-    navigator.mediaDevices.enumerateDevices()
-    .then(function(devices) {
-        devices.forEach(function(device) {
-            //console.log(device.kind + ": " + device.label + " id = " + device.deviceId);
-            if(device.kind == "videoinput"){// && device.label.indexOf("Logicool")!=-1){
-                vidList[device.label] = device.deviceId;
-                $("#VideoList").append($("<option>").html(device.label).val(device.deviceId))
-            }
-            
-            if(device.kind == "audioinput"){
-                $("#AudioList").append($("<option>").html(device.label).val(device.deviceId))
-            } 
-        });
-        console.log(vidList);
-        console.log(audList);
-    })
-    .catch(function(err) {
-        console.log("デバイスリストを取得できませんでした");
-    });
+    async function GetDevice(){
+      let vidList = new Array();
+      let audList = new Array();
+      navigator.mediaDevices.enumerateDevices()
+      .then(function(devices) {
+          devices.forEach(function(device) {
+              //console.log(device.kind + ": " + device.label + " id = " + device.deviceId);
+              if(device.kind == "videoinput"){// && device.label.indexOf("Logicool")!=-1){
+                  vidList[device.label] = device.deviceId;
+                  $("#VideoList").append($("<option>").html(device.label).val(device.deviceId))
+              }
+
+              if(device.kind == "audioinput"){
+                  $("#AudioList").append($("<option>").html(device.label).val(device.deviceId))
+              } 
+          });
+          console.log(vidList);
+          console.log(audList);
+      })
+      .catch(function(err) {
+          console.log("デバイスリストを取得できませんでした");
+      });
+   }
+   GetDevice();
+   
 
 
     $("#local-Start").on("click", async function() {
@@ -171,7 +176,7 @@
             debug: 3
         });  
     });
-
+});
 </script>
 
 </html>
