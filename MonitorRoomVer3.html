@@ -148,6 +148,7 @@ $(document).ready(function(){
     function setupCallEventHandlers(room){
         room.on('open',()=>{
             const textDom = $("<p>");
+            textDom.attr("id", "P_"+peer.id)
             textDom.text("OpenRoom. my id is "+ peer.id);
             $('#controller').append(textDom);
             $('Button_make-call').text("参加中");
