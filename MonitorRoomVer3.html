@@ -169,7 +169,7 @@ $(document).ready(function(){
 
             }else{//実験室端末からの動画
                 //動画を追加する video要素のid はpeeridにする
-                const videoDom =$('<video autoplay >');//muted style="visibility: hidden;"
+                const videoDom =$('<video autoplay hidden>');//muted style="visibility: hidden;"
                 videoDom.get(0).srcObject=stream;　  //videoDom.get(0).srcObject= new MediaStream( stream.getVideoTracks()); これだと動画だけがきて音声が来ない
                 videoDom.get(0).id = stream.peerId;
                 videoDom.width(640);
@@ -246,7 +246,7 @@ $(document).ready(function(){
         var ctx = $("#canvas").get(0).getContext('2d');//Canvasをクリア
         ctx.clearRect(0, 0, ctx.canvas.clientWidth, ctx.canvas.clientHeight);
         $("#P_"+myid).remove();//自分のid表示をクリア
-        
+        $("#textarea_Skyway_log").val("");//入室記録をクリア
         //再接続するときのために、peerを再度作っておく
         myid = "monitor_"+Date.now();
         peer = new Peer(myid,{
