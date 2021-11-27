@@ -134,6 +134,7 @@ $(document).ready(function(){
         key: '5a37ac2c-1e41-4162-8ed7-c2ca8e4a712c',
         debug: 3
     });  
+
     // Room参加処理
     document.getElementById('Button_make-call').onclick = () => {
         const room = peer.joinRoom('FujinoLabsExperimentalRoom2', {mode:'sfu', stream: localStream});
@@ -144,6 +145,29 @@ $(document).ready(function(){
         $("#Button_leave-call").prop("disabled",false);//退出ボタンを押せるようにする
      };
 
+    //退出をクリックする
+    $("#Button_leave-call").on("click",function(){
+        peer.destroy();
+        peersList = new Array();
+        remoteStreams = new Array();
+        $('#RoomContents').empty();
+        $("#Button_leave-call").prop("disabled",true);//退出ボタンを押せないようにする
+        $("#Button_local-Start").prop("disabled",false);//スタートボタンを押せるようにする
+        $("#my-video").prop("hidden",false);//自分のビデオを表示にする
+        $("#my-video").prop("muted",false);//自分のビデオの声のミュートを解除する（あくまで自分のPC上でだけ） 
+        $("#Button_make-call").prop("disabled",false);//「参加」ボタンは押せるようにする
+        $("#Button_record").prop("disabled",true);//録画ボタンを押せないようにする
+        var ctx = $("#canvas").get(0).getContext('2d');//Canvasをクリア
+        ctx.clearRect(0, 0, ctx.canvas.clientWidth, ctx.canvas.clientHeight);
+        $("#P_"+myid).remove();//自分のid表示をクリア
+        $("#textarea_Skyway_log").val("");//入室記録をクリア
+        //再接続するときのために、peerを再度作っておく
+        myid = "monitor_"+Date.now();
+        peer = new Peer(myid,{
+            key: '5a37ac2c-1e41-4162-8ed7-c2ca8e4a712c',
+            debug: 3
+        });  
+    });
     // イベントリスナを設置する関数 
     function setupCallEventHandlers(room){
         room.on('open',()=>{
@@ -177,7 +201,6 @@ $(document).ready(function(){
 
                 $('#RoomContents').append(videoDom);
                 //videoDom.play();
-
 
                 //ストリームを連想配列の形で保存
                 remoteStreams[stream.peerId] = stream;
@@ -231,29 +254,7 @@ $(document).ready(function(){
         });
     }
 
-    //退出をクリックする
-    $("#Button_leave-call").on("click",function(){
-        peer.destroy();
-        peersList = new Array();
-        remoteStreams = new Array();
-        $('#RoomContents').empty();
-        $("#Button_leave-call").prop("disabled",true);//退出ボタンを押せないようにする
-        $("#Button_local-Start").prop("disabled",false);//スタートボタンを押せるようにする
-        $("#my-video").prop("hidden",false);//自分のビデオを表示にする
-        $("#my-video").prop("muted",false);//自分のビデオの声のミュートを解除する（あくまで自分のPC上でだけ） 
-        $("#Button_make-call").prop("disabled",false);//「参加」ボタンは押せるようにする
-        $("#Button_record").prop("disabled",true);//録画ボタンを押せないようにする
-        var ctx = $("#canvas").get(0).getContext('2d');//Canvasをクリア
-        ctx.clearRect(0, 0, ctx.canvas.clientWidth, ctx.canvas.clientHeight);
-        $("#P_"+myid).remove();//自分のid表示をクリア
-        $("#textarea_Skyway_log").val("");//入室記録をクリア
-        //再接続するときのために、peerを再度作っておく
-        myid = "monitor_"+Date.now();
-        peer = new Peer(myid,{
-            key: '5a37ac2c-1e41-4162-8ed7-c2ca8e4a712c',
-            debug: 3
-        });  
-    });
+
 
 //*************************
 //SFURoomで飛んでくる各ストリームを1つにまとめてCanvasに描画する
@@ -355,8 +356,6 @@ $(document).ready(function(){
             }
         });
 
-        //audiodist.stream.getAudioTracks()[0].connect(audioContext.destination);
-        //audiodest.connect(audioContext.destination);
         //MixedVideoにAudioDistのストリームを追加
         mixedVideo.addTrack(audiodest.stream.getAudioTracks()[0]);
 
