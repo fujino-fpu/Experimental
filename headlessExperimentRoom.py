@@ -5,7 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 
-url = "https://fujino-fpu.github.io/Experimental/ExperimentRoom2Ver3.html"
+url = "https://fujino-fpu.github.io/Experimental/ExperimentRoom2Ver3test.html"
 
 driver = webdriver.Chrome(executable_path="/usr/bin/chromedriver")
 
