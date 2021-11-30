@@ -15,7 +15,8 @@
         </select> 
         <select sie=10 id = "AudioList">
             <option value="0">不使用</option>
-        </select> 
+        </select>
+        <input type="checkbox" id="Check_AudioOut">音声出力する</input>
         <button id="local-Start">スタート</button> 
         <button id="make-call" disabled>参加</button>
         <button id="leave-call" disabled>退出</button>
@@ -139,10 +140,12 @@
             $('#RoomContents').append(peerDom);   
 
             if(stream.peerId.indexOf("monitor")!=-1){//モニター端末からの音声は飛んでくるはず
-                const audioDom = $('<audio autoplay>');
-                audioDom.attr('id', stream.peerId);
-                audioDom.get(0).srcObject = stream;
-                $('#RoomContents').append(audioDom);
+                if($("#Check_AudioOut").prop("checked")){//もし音声出力にチェックがついてるなら
+                    const audioDom = $('<audio autoplay>');
+                    audioDom.attr('id', stream.peerId);
+                    audioDom.get(0).srcObject = stream;
+                    $('#RoomContents').append(audioDom);
+                }
             }
 
 
