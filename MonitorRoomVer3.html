@@ -137,7 +137,7 @@ $(document).ready(function(){
 
     // Room参加処理
     document.getElementById('Button_make-call').onclick = () => {
-        const room = peer.joinRoom('FujinoLabsExperimentalRoom2', {mode:'sfu', stream: localStream});
+        const room = peer.joinRoom('FujinoLabsExperimentalRoom2', {mode:'mesh', stream: localStream});
         setupCallEventHandlers(room);
         
         $("#Button_local-Start").prop("disabled",true);//スタートボタンを押せなくする
