@@ -34,6 +34,8 @@
     </div> 
     <div id = "Canvas">
         <canvas id="canvas"></canvas>
+        <P id="p_video1Settings"></P>
+        <P id="p_video2Settings"></P>
     </div>
     <div id="RoomContents"></div>
 </body>
@@ -301,8 +303,13 @@ $(document).ready(function(){
             if($(videoid).get(0)!=null){ //参考　https://qiita.com/mitsuhiro_K/items/7d5cef1f4316c2080fa7               
                 canvasCtx.drawImage($(videoid).get(0),prevwidth, 0, $(videoid).width(), $(videoid).height());
                 prevwidth +=  $(videoid).width();
+
+                const settings = $(videoid).get(0).getVideoTracks()[0].getSettings();
+                $("#p_video1Settings").text(settings["frameRate"]);
             }
         });
+
+
 
         requestAnimationFrame(_canvasUpdate);
     };
