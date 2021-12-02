@@ -22,7 +22,7 @@
  * モニター端末からの音声は受け付ける
  * *****************/
     let localStream; //自分のストリーム
-    navigator.mediaDevices.getUserMedia({video:{width:640, height:480}, audio:false})
+    navigator.mediaDevices.getUserMedia({video:{width:400, height:300}, audio:false})
     .then(function(stream) {
         localStream = stream;
         $("#make-call").prop("disabled",false);//最初「参加」ボタンは押せないが、メディアストリームが取得できるとボタンを押せるようになる
