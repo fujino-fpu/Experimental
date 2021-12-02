@@ -47,7 +47,7 @@
  
     // Room参加処理
     document.getElementById('make-call').onclick = () => {
-        const room = peer.joinRoom('FujinoLabsExperimentalRoom_test', {mode:'sfu', stream: localStream});
+        const room = peer.joinRoom('FujinoLabsExperimentalRoom2', {mode:'mesh', stream: localStream}); //FujinoLabsExperimentalRoom_test
         setupCallEventHandlers(room)
         $("#make-call").prop("disabled",true);//スタートボタンを押せなくする
         $("#leave-call").prop("disabled",false);//スタートボタンを押せるようにする
