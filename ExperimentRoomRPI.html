@@ -29,7 +29,7 @@
     })
     .catch(function(error){
         // 失敗時にはエラーログを出力
-        console.error('mediaDevice.getUserMedia() error:', error);          
+        console.error('mediaDevice.getUserMedia() error:', error.message);          
         return;
     });
 
