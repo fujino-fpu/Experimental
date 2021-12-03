@@ -301,8 +301,8 @@ $(document).ready(function(){
             if($(videoid).get(0)!=null){ //参考　https://qiita.com/mitsuhiro_K/items/7d5cef1f4316c2080fa7               
                 canvasCtx.drawImage($(videoid).get(0),prevwidth, 0, $(videoid).width(), $(videoid).height());
                 prevwidth +=  $(videoid).width();
-                const settings = $(videoid).get(0).getVideoTracks()[0].getSettings();
-                console.log(settings);
+                //const settings = $(videoid).get(0).getVideoTracks()[0].getSettings();
+                //console.log(settings);
                 //$("#p_video1Settings").text(settings["frameRate"]);
             }
         });
