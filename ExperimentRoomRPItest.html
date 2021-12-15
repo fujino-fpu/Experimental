@@ -18,8 +18,8 @@
 <script>
  $(document).ready(function(){
 /****************
- * マイクとカメラは自分で選択する
- * モニター端末からの音声は受け付ける
+ * RasPiのHeadless用。マイクは使用しない。カメラはデフォルトのみ。
+ * ストリームも受け取らない。
  * *****************/
     let localStream; //自分のストリーム
     navigator.mediaDevices.getUserMedia({video:{width:{exact:640}, height:{exact:480},frameRate:15}, audio:false})
