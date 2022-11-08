@@ -1,0 +1,398 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SkyWay - Room example</title>
+
+    <style>
+      video{
+        width:16%;
+      }
+
+      .mystream{
+        position: absolute;
+        top: 60%;
+        left: 40%;
+      }
+
+      .room_info{
+        position: absolute;
+        top: 80%;
+      }
+
+      .otherid{
+        margin-left: 1.6%;
+        margin-right: 1.6%;
+      }
+
+      #iptpanner_id{
+        margin-left: 1.6%;
+        margin-right: 1.6%;
+      }
+
+      #pannercontrol_id{
+        margin-left: 1.6%;
+        margin-right: 1.6%;
+      }
+
+      #iptvolumepanner_id{
+        margin-left: 1.6%;
+        margin-right: 1.6%;
+      }
+
+      #pannervolumecontrol_id{
+        margin-left: 1.6%;
+        margin-right: 1.6%;
+      }
+
+      </style>
+  </head>
+
+
+  <body>
+    <div class="container">
+      <h1 class="heading">Room example</h1>
+
+      <video class ="mystream" id="js-local-stream"></video>
+
+      <div class="otherstream">
+        <table>
+            <tr class="remote-streams" id="js-remote-streams"></div>
+            <tr class="remote-streams-audio" id="js-remote-streams-audio"></div>
+            <tr class="remote-streams-audio-volume" id="js-remote-streams-audio-volume"></div>
+        </table>
+      </div>
+
+      <div class="room_info">
+      <p class="note">
+        Change Room mode (before join in a room):
+        <a href="#">mesh</a> / <a href="#sfu">sfu</a>
+      </p>
+          <span id="js-room-mode"></span>
+          <input type="text" placeholder="Room Name" id="js-room-id">
+          <button id="js-join-trigger">Join</button>
+          <button id="js-leave-trigger">Leave</button>
+          <button id="js-video-Start-trigger">映像Start</button>
+          <button id="js-video-Stop-trigger">映像Stop</button>
+          <button id="js-audio-Start-trigger">音声Start</button>
+          <button id="js-audio-Stop-trigger">音声Stop</button>
+          <button class="mute">Mute button</button>
+          <pre class="messages" id="js-messages"></pre>
+          <input type="text" id="js-local-text">
+          <button id="js-send-trigger">Send</button>
+      <p class="meta" id="js-meta"></p>
+      </div>
+
+    </div>
+    <pre></pre>
+    <script src="//cdn.webrtc.ecl.ntt.com/skyway-4.4.4.js"></script>
+    <script>
+      const Peer = window.Peer;
+
+      (async function main() {
+        const localVideo = document.getElementById('js-local-stream');
+        const joinTrigger = document.getElementById('js-join-trigger');
+        const leaveTrigger = document.getElementById('js-leave-trigger');
+        const remoteVideos = document.getElementById('js-remote-streams');
+        //　下のところにpannerと数値を入れていく
+        const remoteAudios = document.getElementById('js-remote-streams-audio');
+        const remoteAudiosvolume = document.getElementById('js-remote-streams-audio-volume');
+        const roomId = document.getElementById('js-room-id');
+        const roomMode = document.getElementById('js-room-mode');
+        const localText = document.getElementById('js-local-text');
+        const sendTrigger = document.getElementById('js-send-trigger');
+        const messages = document.getElementById('js-messages');
+        const meta = document.getElementById('js-meta');
+        const sdkSrc = document.querySelector('script[src*=skyway]');
+        const pre = document.querySelector('pre');
+        const myScript = document.querySelector('script');
+        //　動画スタートボタン、ストップボタン、音声スタートボタン、ストップボタン（自分）
+        const VdStbtn = document.getElementById("js-video-Start-trigger");
+        const VdSpbtn = document.getElementById("js-video-Stop-trigger");
+        const AdStbtn = document.getElementById("js-audio-Start-trigger");
+        const AdSpbtn = document.getElementById("js-audio-Stop-trigger");
+        pre.innerHTML = myScript.innerHTML;
+
+        meta.innerText = `
+          UA: ${navigator.userAgent}
+          SDK: ${sdkSrc ? sdkSrc.src : 'unknown'}
+        `.trim();
+
+        const getRoomModeByHash = () => (location.hash === '#sfu' ? 'sfu' : 'mesh');
+
+        roomMode.textContent = getRoomModeByHash();
+        window.addEventListener(
+          'hashchange',
+          () => (roomMode.textContent = getRoomModeByHash())
+        );
+
+        const localStream = await navigator.mediaDevices
+          .getUserMedia({
+            audio: true,
+            video: true,
+          })
+          .catch(console.error);
+
+        // Render local stream
+        localVideo.muted = true;
+        localVideo.srcObject = localStream;
+        localVideo.playsInline = true;
+        await localVideo.play().catch(console.error);
+
+        // eslint-disable-next-line require-atomic-updates
+        const peer = (window.peer = new Peer({
+          key: "9b1cb579-8011-49d4-aff4-d88f29806640",
+          debug: 3,
+        }));
+
+        // Register join handler
+        joinTrigger.addEventListener('click', () => {
+          // Note that you need to ensure the peer has connected to signaling server
+          // before using methods of peer instance.
+          if (!peer.open) {
+            return;
+          }
+
+          const room = peer.joinRoom(roomId.value, {
+            mode: getRoomModeByHash(),
+            stream: localStream,
+          });
+
+          room.once('open', () => {
+            messages.textContent += '=== You joined ===\n';
+          });
+          room.on('peerJoin', peerId => {
+            messages.textContent += `=== ${peerId} joined ===\n`;
+          });
+
+          // Render remote stream for new peer join in the room
+          room.on('stream', async stream => {
+            const newVideo = document.createElement('video');
+            newVideo.srcObject = stream;
+            newVideo.playsInline = true;
+            newVideo.muted = "true";
+            // mark peerId to find it later at peerLeave event
+            newVideo.setAttribute('data-peer-id', stream.peerId);
+            newVideo.setAttribute('class', "otherid");
+            //            remoteVideos.append(newVideo);            //藤野コメントアウト
+            videoframe = document.createElement("td");              //藤野追記
+            videoframe.append(newVideo);                            //藤野追記
+            remoteVideos.append(videoframe);                        //藤野追記
+            await newVideo.play().catch(console.error);
+
+            //　人が入るごとにそれぞれのボリューム調節バナーを作成
+            const iptvolumepanner = document.createElement("input");
+            const volumepannercontrol = document.createElement("span");
+            const volumeconttext = document.createTextNode("1");
+            volumepannercontrol.appendChild(volumeconttext);
+            const volumepanID = String(stream.peerId)+"-"+"volumepanning-control";
+            const volumepanIDV= String(stream.peerId)+"-"+"volumepanning-value";
+
+            iptvolumepanner.setAttribute("class",volumepanID);
+            iptvolumepanner.setAttribute("data-peer-id",stream.peerId);
+            iptvolumepanner.setAttribute("type","range");
+            iptvolumepanner.setAttribute("min","0");
+            iptvolumepanner.setAttribute("max","2");
+            iptvolumepanner.setAttribute("step","0.01");
+            iptvolumepanner.setAttribute("value","1");
+            iptvolumepanner.setAttribute("id","iptvolumepanner_id");
+            volumepannercontrol.setAttribute("class",volumepanIDV);
+            volumepannercontrol.setAttribute("data-peer-id",stream.peerId);
+            volumepannercontrol.setAttribute("id","pannervolumecontrol_id");
+            //  remoteAudiosvolume.append(iptvolumepanner);         //藤野コメント
+            //  remoteAudiosvolume.append(volumepannercontrol);     //藤野コメント
+            volumeFrame = document.createElement("td")              //藤野追記
+            volumeFrame.append(iptvolumepanner);                    //藤野追記
+            volumeFrame.append(volumepannercontrol);                //藤野追記
+            remoteAudiosvolume.append(volumeFrame);                 //藤野追記
+
+
+            //　人が入るごとにpannerを設置するためのものを生成する
+            const iptpanner = document.createElement("input");
+            const pannercontrol = document.createElement("span");
+            const conttext = document.createTextNode("0");
+            pannercontrol.appendChild(conttext);
+            const panID = String(stream.peerId)+"-"+"panning-control";
+            const panIDV= String(stream.peerId)+"-"+"panning-value";
+
+            iptpanner.setAttribute("class",panID);
+            iptpanner.setAttribute("data-peer-id",stream.peerId);
+            iptpanner.setAttribute("type","range");
+            iptpanner.setAttribute("min","-1");
+            iptpanner.setAttribute("max","1");
+            iptpanner.setAttribute("step","0.1");
+            iptpanner.setAttribute("value","0");
+            iptpanner.setAttribute("id","iptpanner_id");
+            pannercontrol.setAttribute("class",panIDV);
+            pannercontrol.setAttribute("data-peer-id",stream.peerId);
+            pannercontrol.setAttribute("id","pannercontrol_id");
+            //  remoteAudios.append(iptpanner);             //藤野コメント
+            //  remoteAudios.append(pannercontrol);         //藤野コメント
+            panFrame = document.createElement("td")        //藤野追記
+            panFrame.append(iptpanner);                    //藤野追記
+            panFrame.append(pannercontrol);                //藤野追記
+            remoteAudiosvolume.append(panFrame);           //藤野追記
+            //ここまではいけてる
+
+
+            const panControl = document.querySelector("."+panID);
+            const panValue = document.querySelector("."+panIDV);
+            const volumevolumepanControl = document.querySelector("."+volumepanID);
+            const volumepanValue = document.querySelector("."+volumepanIDV);
+
+            var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            var audiosource = audioCtx.createMediaStreamSource(stream);
+            var gainNode = audioCtx.createGain();
+            var panNode = audioCtx.createStereoPanner();
+
+            panControl.oninput = function() {
+              panNode.pan.value = panControl.value;
+              panValue.innerHTML = panControl.value;
+            };
+
+            volumevolumepanControl.oninput = function() {
+              gainNode.gain.value = volumevolumepanControl.value;
+              volumepanValue.innerHTML = volumevolumepanControl.value;
+            };
+
+            audiosource.connect(gainNode).connect(panNode).connect(audioCtx.destination);
+
+            var mute = document.querySelector('.mute');
+            mute.onclick = voiceMute;
+
+            function voiceMute() {
+              if(mute.id == "") {
+                // 0 means mute. If you still hear something, make sure you haven't
+                // connected your source into the output in addition to using the GainNode.
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                mute.id = "activated";
+                mute.textContent = "Unmute";
+              } else {
+                gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+                mute.id = "";
+                mute.textContent = "Mute";
+              }
+            };
+
+
+
+
+          });
+
+          room.on('data', ({ data, src }) => {
+            // Show a message sent to the room and who sent
+            messages.textContent += `${src}: ${data}\n`;
+            var selfidvideo = remoteVideos.querySelector(`[data-peer-id="${src}"]`);
+            var selfidaudio1 = remoteAudios.querySelector(`[data-peer-id="${src}"]`);
+            var selfidaudio2 = remoteAudiosvolume.querySelector(`[data-peer-id="${src}"]`);
+            // できない
+            // var selfidaudio3 = remoteAudios.querySelector(`[class="${String(src)}" + "-panning-value"]`);
+            // selfidaudio3.style.display = "none";
+            //ここまで
+            if(data == "off"){
+            selfidvideo.style.display = "none";
+            selfidaudio1.style.display = "none";
+            selfidaudio2.style.display = "none";
+            }
+            else if(data == "on"){
+            selfidvideo.style.display = "inline";
+            selfidaudio1.style.display = "inline";
+            selfidaudio2.style.display = "inline";
+            };
+          });
+
+
+          // for closing room members
+          room.on('peerLeave', peerId => {
+            const remoteVideo = remoteVideos.querySelector(
+              `[data-peer-id="${peerId}"]`
+            );
+            remoteVideo.srcObject.getTracks().forEach(track => track.stop());
+            remoteVideo.srcObject = null;
+            remoteVideo.remove();
+
+            const remoteAudio1 = remoteAudios.querySelector(
+              `[class="${String(peerId)+"-"+"panning-control"}"]`
+            );
+            remoteAudio1.srcObject = null;
+            remoteAudio1.remove();
+
+            const remoteAudio3 = remoteAudiosvolume.querySelector(
+              `[class="${String(peerId)+"-"+"volumepanning-control"}"`
+            );
+            remoteAudio3.srcObject = null;
+            remoteAudio3.remove();
+
+            const remoteAudio2 = remoteAudios.querySelector(
+              `[class="${String(peerId)+"-"+"panning-value"}"`
+            );
+            remoteAudio2.srcObject = null;
+            remoteAudio2.remove();
+
+            const remoteAudio4 = remoteAudiosvolume.querySelector(
+              `[class="${String(peerId)+"-"+"volumepanning-value"}"`
+            );
+            remoteAudio4.srcObject = null;
+            remoteAudio4.remove();
+
+            messages.textContent += `=== ${peerId} left ===\n`;
+          });
+
+          // for closing myself
+          room.once('close', () => {
+            sendTrigger.removeEventListener('click', onClickSend);
+            messages.textContent += '== You left ===\n';
+            Array.from(remoteVideos.children).forEach(remoteVideo => {
+              remoteVideo.srcObject.getTracks().forEach(track => track.stop());
+              remoteVideo.srcObject = null;
+              remoteVideo.remove();});
+            Array.from(remoteAudios.children).forEach(remoteAudio => {
+              remoteAudio.srcObject = null;
+              remoteAudio.remove();}
+            );
+            Array.from(remoteAudiosvolume.children).forEach(remoteAudiosvolume => {
+              remoteAudiosvolume.srcObject = null;
+              remoteAudiosvolume.remove();}
+            );
+          });
+
+          sendTrigger.addEventListener('click', onClickSend);
+          leaveTrigger.addEventListener('click', () => room.close(), { once: true });
+
+          function onClickSend() {
+            // Send message to all of the peers in the room via websocket
+            room.send(localText.value);
+
+            messages.textContent += `${peer.id}: ${localText.value}\n`;
+            localText.value = '';
+          }
+
+          VdStbtn.addEventListener("click", videostart,false);
+          VdSpbtn.addEventListener("click", videostop,false);
+          AdStbtn.addEventListener("click", audiostart,false);
+          AdSpbtn.addEventListener("click", audiostop,false);
+
+          function videostop(){
+            localStream.getVideoTracks().forEach((track) => (track.enabled = false));
+          };
+          function videostart(){
+            localStream.getVideoTracks().forEach((track) => (track.enabled = true));
+          };
+          function audiostop(){
+            localStream.getAudioTracks().forEach((track) => (track.enabled = false));
+            messages.textContent += '=== You AudioStop ===\n';
+          };
+          function audiostart(){
+            localStream.getAudioTracks().forEach((track) => (track.enabled = true));
+            messages.textContent += '=== You AudioStart ===\n';
+          };
+        });
+
+        peer.on('error', console.error);
+      })();
+
+    </script>
+  </body>
+</html>
