@@ -31,9 +31,9 @@
     <div id ="RecordControl">
         <div>
             <input type="radio" id="SoundOFFVideo" name="contact" value="SoundOff" />
-            <label for="contactChoice1">音声なし</label> 
-            <input type="radio" id="SoundOnVideo" name="contact" value="SoundOn" />
-            <label for="contactChoice1">音声あり</label> 
+            <label for="SoundOFFVideo">音声なし録画</label> 
+            <input type="radio" id="SoundOnVideo" name="contact" value="SoundOn" disabled="true"/>
+            <label for="SoundOnVideo">音声付き録画</label> 
         </div>
         <button id="Button_record" disabled="true">録画</button>
         <button id="Button_recordstop" disabled="true">停止</button>
@@ -359,9 +359,10 @@ $(document).ready(function(){
         peersList.forEach(function(peerId){
             var stream = remoteStreams[peerId];
             if(stream.getAudioTracks().length!=0){
-                console.log("test");
+                console.log("音声トラック取得");
                 const source0 = audioContext.createMediaStreamSource(stream);
                 source0.connect(audiodest);//.connect(audioContext.destination);//
+                $("#SoundOnVideo").prop("disabled",false);//音声入力があった場合に限り音声あり録画を可能にする
             }
         });
 
@@ -376,8 +377,29 @@ $(document).ready(function(){
     function startRecording() {
         var options = {mimeType: 'video/webm;codecs=vp9', audioBitsPerSecond: 128000, videoBitsPerSecond : 1000000};//音は128kbps、映像は1Mbps
         recordedBlobs = [];
+
+        var stream;
+        if($("#SoundOFFVideo").checked){
+            if (confirm("音声なしで録画をします。よろしいですか")) {
+                stream = canvas.captureStream(25);//<----ここを音声付き動画ストリームに書き換えればよい。Canvasだけだと音声はつかない
+                console.log("音声なし録画スタート");
+            }else {
+                // ユーザーがキャンセルをクリックした時の処理
+                console.log("キャンセルがクリックされました。");
+                return;
+            }
+        }else if($("#SoundOnVideo").checked){
+            if (confirm("音声付きで録画をします。よろしいですか")) {
+                stream = mixedVideo;//<----ここを音声付き動画ストリームに書き換えればよい。Canvasだけだと音声はつかない
+                console.log("音声付き録画スタート");
+            }else {
+                // ユーザーがキャンセルをクリックした時の処理
+                console.log("キャンセルがクリックされました。");
+                return;
+            }
+        }
         //var stream = canvas.captureStream(25);//<----ここを音声付き動画ストリームに書き換えればよい。Canvasだけだと音声はつかない
-        var stream = mixedVideo;//<----ここを音声付き動画ストリームに書き換えればよい。Canvasだけだと音声はつかない
+        //var stream = mixedVideo;//<----ここを音声付き動画ストリームに書き換えればよい。Canvasだけだと音声はつかない
         try {
             mediaRecorder = new MediaRecorder(stream, options);
         } catch (e0) {
