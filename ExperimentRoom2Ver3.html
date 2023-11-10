@@ -88,7 +88,7 @@
             videoElm.play();
 
             $("#make-call").prop("disabled",false);//最初「参加」ボタンは押せないが、メディアストリームが取得できるとボタンを押せるようになる
-            $("#local-Start").prop("disabled",true);//最初「参加」ボタンは押せないが、メディアストリームが取得できるとボタンを押せるようになる
+            $("#local-Start").prop("disabled",true);//スタートすると「スタート」ボタンは押せなくする。
         }
         catch(error){
                     // 失敗時にはエラーログを出力
