@@ -115,10 +115,9 @@
         setupCallEventHandlers(room)
         $("#my-video").prop("hidden",true);
         $("#my-video").prop("muted",true);
-        $("#my-video").pause();
-        $("#make-call").prop("disabled",true);//スタートボタンを押せなくする
-        $("#leave-call").prop("disabled",false);//スタートボタンを押せるようにする
-
+        //$("#my-video").pause();
+        $("#make-call").prop("disabled",true);//参加ボタンを押せなくする
+        $("#leave-call").prop("disabled",false);//退出ボタンを押せるようにする
      };
 
     // イベントリスナを設置する関数 
