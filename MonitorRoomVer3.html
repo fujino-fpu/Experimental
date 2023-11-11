@@ -222,6 +222,11 @@ $(document).ready(function(){
                     $("#Button_record").prop("disabled",false);
                 };//録画ボタンをおせるようにする
 
+                if(stream.getAudioTracks().length!=0){//streamに音声が含まれていれば音声付き録画をできるようにする。
+                    console.log("音声トラック取得");
+                    $("#SoundOnVideo").prop("disabled",false);//音声入力があった場合に限り音声あり録画を可能にする
+                }
+
             }
             // //videoをミュートしても、以下のコードを有効化してると、ストリームから直接、音がスピーカに飛ぶ。
             //const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -362,7 +367,6 @@ $(document).ready(function(){
                 console.log("音声トラック取得");
                 const source0 = audioContext.createMediaStreamSource(stream);
                 source0.connect(audiodest);//.connect(audioContext.destination);//
-                $("#SoundOnVideo").prop("disabled",false);//音声入力があった場合に限り音声あり録画を可能にする
             }
         });
 
