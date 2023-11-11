@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>掛け算練習</title>
+</head>
+<body>
+    <h1>掛け算クイズ</h1>
+    <button id="startButton">スタート</button>
+    <div id="problem" style="font-size: 24px; margin-top: 20px;"></div>
+    <input type="number" id="answer" style="margin-top: 10px;">
+    <button id="endButton" style="margin-top: 10px;" disabled>終了</button>
+    <script src="script.js"></script>
+</body>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const problems = ["14×4", "15×3", "12×7", "11×6", "18×2", "16×5", "17×8", "13×9", "19×2", "14×7"];
+    let currentProblemIndex = -1;
+    let startTime;
+    let results = [];
+
+    document.getElementById('startButton').addEventListener('click', function() {
+        currentProblemIndex++;
+        if (currentProblemIndex < problems.length) {
+            document.getElementById('problem').textContent = problems[currentProblemIndex];
+            startTime = new Date();
+        }
+        document.getElementById('startButton').setAttribute("disabled",true);
+    });
+
+    document.getElementById('answer').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const answer = document.getElementById('answer').value;
+            const endTime = new Date();
+            const timeTaken = (endTime - startTime) / 1000; // 秒単位で計測
+            results.push({ problem: problems[currentProblemIndex], answer, timeTaken });
+
+            currentProblemIndex++;
+            if (currentProblemIndex < problems.length) {
+                document.getElementById('problem').textContent = problems[currentProblemIndex];
+                document.getElementById('answer').value = '';
+                startTime = new Date();
+            } else {
+                document.getElementById('problem').textContent = '全問終了';
+                document.getElementById('endButton').disabled = false;
+            }
+        }
+    });
+
+    document.getElementById('endButton').addEventListener('click', function() {
+        const textToSave = results.map(result => `${result.problem} - ${result.timeTaken}秒`).join('\n');
+        const blob = new Blob([textToSave], { type: 'text/plain' });
+        const link = document.createElement('a');
+        link.download = 'results.txt';
+        link.href = window.URL.createObjectURL(blob);
+        link.click();
+        window.URL.revokeObjectURL(link.href);
+        document.getElementById('startButton').disabled=false;
+        document.getElementById('endButton').disabled = true;
+
+    });
+});
+</script>
+</html>
