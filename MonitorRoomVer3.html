@@ -30,9 +30,9 @@
     </div>
     <div id ="RecordControl">
         <div>
-            <input type="radio" id="SoundOFFVideo" name="contact" value="SoundOff" />
+            <input type="radio" id="SoundOFFVideo" name="SoundSlect" value="SoundOff" />
             <label for="SoundOFFVideo">音声なし録画</label> 
-            <input type="radio" id="SoundOnVideo" name="contact" value="SoundOn" disabled="true"/>
+            <input type="radio" id="SoundOnVideo" name="SoundSlect" value="SoundOn" disabled="true"/>
             <label for="SoundOnVideo">音声付き録画</label> 
         </div>
         <button id="Button_record" disabled="true">録画</button>
@@ -383,7 +383,7 @@ $(document).ready(function(){
         recordedBlobs = [];
 
         var stream;
-        if($("#SoundOFFVideo").checked){
+        if($("#SoundOFFVideo").prop("checked")){
             if (window.confirm("音声なしで録画をします。よろしいですか")) {
                 stream = canvas.captureStream(25);//<----ここを音声付き動画ストリームに書き換えればよい。Canvasだけだと音声はつかない
                 console.log("音声なし録画スタート");
@@ -392,7 +392,7 @@ $(document).ready(function(){
                 console.log("キャンセルがクリックされました。");
                 return;
             }
-        }else if($("#SoundOnVideo").checked){
+        }else if($("#SoundOnVideo").prop("checked")){
             if (window.confirm("音声付きで録画をします。よろしいですか")) {
                 stream = mixedVideo;//<----ここを音声付き動画ストリームに書き換えればよい。Canvasだけだと音声はつかない
                 console.log("音声付き録画スタート");
