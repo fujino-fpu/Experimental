@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.getElementById('endButton').addEventListener('click', function() {
-        const textToSave = results.map(result => `${result.problem},$(result.answer),${result.timeTaken}秒`).join('\n');
+        const textToSave = results.map(result => `${result.problem},${result.answer},${result.timeTaken}秒`).join('\n');
         const blob = new Blob([textToSave], { type: 'text/plain' });
         const link = document.createElement('a');
         link.download = 'results.txt';
