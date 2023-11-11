@@ -262,6 +262,17 @@ $(document).ready(function(){
             var strlog = strDateTime + " " + peerId + " leaved now.\n";
             //$('#RoomContents').append(peerDom);
             $("#textarea_Skyway_log").val($("#textarea_Skyway_log").val()+strlog ); 
+
+            //残ったPeerのストリームに音声がついてるかどうかを確認して、ついていなければ音声付き録画のチェックをできないようにする
+            var f_SoundOnVideo=true;
+            for(var i=0; i<peers.List.length();i++){
+                if(remoteStreams[i].getAudioTracks().length!=0){
+                    f_SoundOnVideo=false;//音声入力まだ
+                    あった場合に限り音声あり録画を可能にする 
+                }
+            }
+            $("#SoundOnVideo").prop("disabled",f_SoundOnVideo);                   
+
         });
     }
 
