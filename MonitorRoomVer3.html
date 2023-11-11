@@ -384,7 +384,7 @@ $(document).ready(function(){
 
         var stream;
         if($("#SoundOFFVideo").checked){
-            if (confirm("音声なしで録画をします。よろしいですか")) {
+            if (window.confirm("音声なしで録画をします。よろしいですか")) {
                 stream = canvas.captureStream(25);//<----ここを音声付き動画ストリームに書き換えればよい。Canvasだけだと音声はつかない
                 console.log("音声なし録画スタート");
             }else {
@@ -393,7 +393,7 @@ $(document).ready(function(){
                 return;
             }
         }else if($("#SoundOnVideo").checked){
-            if (confirm("音声付きで録画をします。よろしいですか")) {
+            if (window.confirm("音声付きで録画をします。よろしいですか")) {
                 stream = mixedVideo;//<----ここを音声付き動画ストリームに書き換えればよい。Canvasだけだと音声はつかない
                 console.log("音声付き録画スタート");
             }else {
