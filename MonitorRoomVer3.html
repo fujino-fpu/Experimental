@@ -338,11 +338,12 @@ $(document).ready(function(){
 //************************************
     //録画スタートボタン
     $("#Button_record").on("click", function(){
-        $("#Button_record").text("録画中");
-        $("#Button_record").prop("disabled",true);
-        $("#Button_recordstop").prop("disabled",false);
         mixVideoAudio();
-        startRecording();
+        if(startRecording()){
+            $("#Button_record").text("録画中");
+            $("#Button_record").prop("disabled",true);
+            $("#Button_recordstop").prop("disabled",false);
+        }
     });
 
     //録画停止ボタン
@@ -401,7 +402,7 @@ $(document).ready(function(){
             }else {
                 // ユーザーがキャンセルをクリックした時の処理
                 console.log("キャンセルがクリックされました。");
-                return;
+                return 0;
             }
         }else if($("#SoundOnVideo").prop("checked")){
             if (window.confirm("音声付きで録画をします。よろしいですか")) {
@@ -410,7 +411,7 @@ $(document).ready(function(){
             }else {
                 // ユーザーがキャンセルをクリックした時の処理
                 console.log("キャンセルがクリックされました。");
-                return;
+                return 0;
             }
         }
         //var stream = canvas.captureStream(25);//<----ここを音声付き動画ストリームに書き換えればよい。Canvasだけだと音声はつかない
@@ -437,6 +438,7 @@ $(document).ready(function(){
         mediaRecorder.ondataavailable = handleDataAvailable;
         mediaRecorder.start(10); // collect 10ms of data
         console.log('MediaRecorder started', mediaRecorder);
+        return 1;
     }
 
 
