@@ -9,7 +9,7 @@
     <button id="startButton">スタート</button>
     <div id="Explain" style="font-size: 5vh; margin-top: 20px;">数字の入力を誤った場合には、誤った数字は消さずに「0（ゼロ）」を3回以上入れた上で、正しい解答を追記してください。</div>
     <div id="problem" style="font-size: 10vh; margin-top: 20px;"></div>
-    <input type="number" id="answer" style="margin-top: 10px;font-size: 10vh;width:50vw">
+    <input type="number" id="answer" style="margin-top: 10px;font-size: 10vh;width:50vw" hidden>
     <p><button id="endButton" style="margin-top: 10px;" disabled>終了</button></p>
     <script src="script.js"></script>
 </body>
@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
             startTime = new Date();
         }
         document.getElementById('startButton').setAttribute("disabled",true);
+        document.getElementById('answer').hidden=false;
     });
 
     document.getElementById('answer').addEventListener('keypress', function(e) {
@@ -45,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 document.getElementById('problem').textContent = '全問終了';
                 document.getElementById('endButton').disabled = false;
+                document.getElementById('answer').hidden = true;
             }
         }
     });
