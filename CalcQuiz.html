@@ -5,10 +5,12 @@
 </head>
 <body>
     <h1>掛け算クイズ</h1>
+    <input type="text" id="name" placeholder="名前を入力" style="margin-bottom: 10px;">
     <button id="startButton">スタート</button>
-    <div id="problem" style="font-size: 24px; margin-top: 20px;"></div>
-    <input type="number" id="answer" style="margin-top: 10px;">
-    <button id="endButton" style="margin-top: 10px;" disabled>終了</button>
+    <div id="Explain" style="font-size: 5vh; margin-top: 20px;">数字の入力を誤った場合には、誤った数字は消さずに「0（ゼロ）」を3回以上入れた上で、正しい解答を追記してください。</div>
+    <div id="problem" style="font-size: 10vh; margin-top: 20px;"></div>
+    <input type="number" id="answer" style="margin-top: 10px;font-size: 10vh;width:50vw">
+    <p><button id="endButton" style="margin-top: 10px;" disabled>終了</button></p>
     <script src="script.js"></script>
 </body>
 
@@ -50,8 +52,16 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('endButton').addEventListener('click', function() {
         const textToSave = results.map(result => `${result.problem},${result.answer},${result.timeTaken}秒`).join('\n');
         const blob = new Blob([textToSave], { type: 'text/plain' });
+
+        // 名前入力欄から名前を取得
+        const name = document.getElementById('name').value || '無名';
+
+        // 日時を取得
+        const now = new Date();
+        const formattedDateTime = formatDate(now);
+
         const link = document.createElement('a');
-        link.download = 'results.txt';
+        link.download = `${name}_${formattedDateTime}.txt`;
         link.href = window.URL.createObjectURL(blob);
         link.click();
         window.URL.revokeObjectURL(link.href);
@@ -59,6 +69,17 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('endButton').disabled = true;
 
     });
+
+    // 日時を YYYYMMDD_HHMMSS 形式でフォーマットする関数
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const seconds = date.getSeconds().toString().padStart(2, '0');
+        return `${year}${month}${day}_${hours}${minutes}${seconds}`;
+    }
 });
 </script>
 </html>
