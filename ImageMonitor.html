@@ -52,207 +52,207 @@
         <audio id="blueBAudio" src="ImageMonitorVoice/Blue_B.mp3"></audio>
         <audio id="whiteBAudio" src="ImageMonitorVoice/White_B.mp3"></audio>
     </div>
-
-    <script>
-        // カメラからの映像を表示する<video>要素とCanvasを取得
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const message = document.getElementById('message');
-
-        // 赤色、青色、白色のしきい値のinput要素と表示用のspan要素を取得
-        const redThresholdInput = document.getElementById('redThreshold');
-        const blueThresholdInput = document.getElementById('blueThreshold');
-        const whiteThresholdInput = document.getElementById('whiteThreshold');
-        const redThresholdValue = document.getElementById('redThresholdValue');
-        const blueThresholdValue = document.getElementById('blueThresholdValue');
-        const whiteThresholdValue = document.getElementById('whiteThresholdValue');
-
-        // エリアの面積の閾値のinput要素と表示用のspan要素を取得
-        const AreaThresholdInput = document.getElementById('AreaThreshold');
-        const AreaThresholdValue = document.getElementById('AreaThresholdValue');
-
-        // 検出時間のinput要素と表示用のspan要素を取得
-        const detectionTimeInput = document.getElementById('detectionTime');
-        const detectionTimeValue = document.getElementById('detectionTimeValue');
-
-        // スタートボタンと停止ボタンを取得
-        const startButton = document.getElementById('startButton');
-        const stopButton = document.getElementById('stopButton');
-
-        // ラジオボタンを取得
-        const patternARadio = document.getElementById('patternA');
-        const patternBRadio = document.getElementById('patternB');
-
-        let isRunning = false; // カメラの処理が実行中かどうかを示すフラグ
-        let isRedPlayed = false; // 赤色の音声が流されたかどうかのフラグ。1回ならしたら、その検出が続いている間は鳴らさない
-        let isBluePlayed=false;  // 青色の音声が流されたかどうかのフラグ。1回ならしたら、その検出が続いている間は鳴らさない
-        let isWhitePlayed=false; // 白色の音声が流されたかどうかのフラグ。1回ならしたら、その検出が続いている間は鳴らさない
-
-        // スライダーの値が変更されたときに表示用のspan要素に反映する関数
-        function updateSliderValue(slider, span) {
-            span.textContent = slider.value;
-        }
-
-        // スライダーの値が変更されたときに表示を更新
-        redThresholdInput.addEventListener('input', () => {
-            updateSliderValue(redThresholdInput, redThresholdValue);
-        });
-        blueThresholdInput.addEventListener('input', () => {
-            updateSliderValue(blueThresholdInput, blueThresholdValue);
-        });
-        whiteThresholdInput.addEventListener('input', () => {
-            updateSliderValue(whiteThresholdInput, whiteThresholdValue);
-        });
-        AreaThresholdInput.addEventListener('input', () => {
-            updateSliderValue(AreaThresholdInput, AreaThresholdValue);
-        });
-        detectionTimeInput.addEventListener('input', () => {
-            updateSliderValue(detectionTimeInput, detectionTimeValue);
-        });
-
-        // スタートボタンがクリックされたときの処理
-        startButton.addEventListener('click', () => {
-            if (!isRunning) {
-                const pattern = document.querySelector('input[name="pattern"]:checked');
-
-                if (!pattern) {
-                    alert('AパターンまたはBパターンを選択してください');
-                    return;
-                }
-
-                if (confirm(`本当に${pattern.value}でスタートしますか？`)) {
-                    detectColors(pattern.value);
-                    startButton.disabled = true;
-                    stopButton.disabled = false;
-                }
-            }
-        });
-
-        // 停止ボタンがクリックされたときの処理
-        stopButton.addEventListener('click', () => {
-            stopDetection();
-            startButton.disabled = false;
-            stopButton.disabled = true;
-        });
-
-        // カメラからの映像を取得
-        async function startCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                video.srcObject = stream;
-            } catch (error) {
-                console.error('カメラのアクセスが拒否されました: ', error);
-            }
-        }
-
-        startCamera();
-        // ビデオストリームが利用可能になったら実行
-        video.addEventListener('canplay', () => {
-            
-        });
-
-        // 色検出
-        function detectColors(pattern) {
-            isRunning = true;
-            const redThreshold = parseInt(redThresholdInput.value, 10);
-            const blueThreshold = parseInt(blueThresholdInput.value, 10);
-            const whiteThreshold = parseInt(whiteThresholdInput.value, 10);
-
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-
-            let redArea = 0;
-            let blueArea = 0;
-            let whiteArea = 0;
-
-            for (let i = 0; i < data.length; i += 4) {
-                const red = data[i];
-                const green = data[i + 1];
-                const blue = data[i + 2];
-
-                if (red > redThreshold && green < blueThreshold && blue < blueThreshold) {
-                    redArea++;
-                    data[i] = 255;
-                    data[i+1]=0;
-                    data[i+2]=0;
-                }
-                else if (blue > blueThreshold && red < redThreshold && green < redThreshold) {
-                    blueArea++;
-                    data[i]=0;
-                    data[i+1]=0;
-                    data[i+2]=255;
-                }
-                else if (red > whiteThreshold && green > whiteThreshold && blue > whiteThreshold) {
-                    whiteArea++;
-                    data[i]=255;
-                    data[i+1]=255;
-                    data[i+2]=255;
-
-                }
-            }
-
-            ctx.putImageData(imageData, 0, 0);
-
-
-            const AreaThreshold = parseInt(AreaThresholdInput.value, 10);
-
-            if (redArea > AreaThreshold) {
-                message.textContent = '赤色エリアが設定の閾値を超えました';
-                if(isRedPlayed===false){
-                    if (pattern === 'A') {
-                        playAudio(redAudio);
-                    } else if (pattern === 'B') {
-                        playAudio(redBAudio);
-                    }
-                    isRedPlayed=true;
-                }
-            } else if (blueArea > AreaThreshold) {
-                message.textContent = '青色エリアが設定の閾値を超えました';
-                if(isBluePlayed===false){
-                    if (pattern === 'A') {
-                        playAudio(blueAudio);
-                    } else if (pattern === 'B') {
-                        playAudio(blueBAudio);
-                    }
-                    isBluePlayed = true;
-                }
-            } else if (whiteArea > AreaThreshold) {
-                message.textContent = '白色エリアが設定の閾値を超えました';
-                if(isWhitePlayed===false){
-                    if (pattern === 'A') {
-                        playAudio(whiteAudio);
-                    } else if (pattern === 'B') {
-                        playAudio(whiteBAudio);
-                    }
-                    isWhitePlayed = true;
-                }
-            } else {
-                // 検出が終了したらメッセージをリセット
-                message.textContent = '色のエリアは設定の閾値を超えていません';
-            }
-
-            if (isRunning) {
-                setTimeout(() => {
-                    detectColors(pattern);
-                }, 100); // 100ミリ秒ごとに実行
-            }
-        }
-
-        // ストップボタンがクリックされたときの処理
-        function stopDetection() {
-            isRunning = false;
-            message.textContent = '';
-        }
-
-        // 音声再生のための関数
-        function playAudio(audioElement) {
-            if (audioElement.paused) {
-                audioElement.play();
-            }
-        }
-
-    </script>
 </body>
+
+<script>
+    // カメラからの映像を表示する<video>要素とCanvasを取得
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const message = document.getElementById('message');
+
+    // 赤色、青色、白色のしきい値のinput要素と表示用のspan要素を取得
+    const redThresholdInput = document.getElementById('redThreshold');
+    const blueThresholdInput = document.getElementById('blueThreshold');
+    const whiteThresholdInput = document.getElementById('whiteThreshold');
+    const redThresholdValue = document.getElementById('redThresholdValue');
+    const blueThresholdValue = document.getElementById('blueThresholdValue');
+    const whiteThresholdValue = document.getElementById('whiteThresholdValue');
+
+    // エリアの面積の閾値のinput要素と表示用のspan要素を取得
+    const AreaThresholdInput = document.getElementById('AreaThreshold');
+    const AreaThresholdValue = document.getElementById('AreaThresholdValue');
+
+    // 検出時間のinput要素と表示用のspan要素を取得
+    const detectionTimeInput = document.getElementById('detectionTime');
+    const detectionTimeValue = document.getElementById('detectionTimeValue');
+
+    // スタートボタンと停止ボタンを取得
+    const startButton = document.getElementById('startButton');
+    const stopButton = document.getElementById('stopButton');
+
+    // ラジオボタンを取得
+    const patternARadio = document.getElementById('patternA');
+    const patternBRadio = document.getElementById('patternB');
+
+    let isRunning = false; // カメラの処理が実行中かどうかを示すフラグ
+    let isRedPlayed = false; // 赤色の音声が流されたかどうかのフラグ。1回ならしたら、その検出が続いている間は鳴らさない
+    let isBluePlayed=false;  // 青色の音声が流されたかどうかのフラグ。1回ならしたら、その検出が続いている間は鳴らさない
+    let isWhitePlayed=false; // 白色の音声が流されたかどうかのフラグ。1回ならしたら、その検出が続いている間は鳴らさない
+
+    // スライダーの値が変更されたときに表示用のspan要素に反映する関数
+    function updateSliderValue(slider, span) {
+        span.textContent = slider.value;
+    }
+
+    // スライダーの値が変更されたときに表示を更新
+    redThresholdInput.addEventListener('input', () => {
+        updateSliderValue(redThresholdInput, redThresholdValue);
+    });
+    blueThresholdInput.addEventListener('input', () => {
+        updateSliderValue(blueThresholdInput, blueThresholdValue);
+    });
+    whiteThresholdInput.addEventListener('input', () => {
+        updateSliderValue(whiteThresholdInput, whiteThresholdValue);
+    });
+    AreaThresholdInput.addEventListener('input', () => {
+        updateSliderValue(AreaThresholdInput, AreaThresholdValue);
+    });
+    detectionTimeInput.addEventListener('input', () => {
+        updateSliderValue(detectionTimeInput, detectionTimeValue);
+    });
+
+    // スタートボタンがクリックされたときの処理
+    startButton.addEventListener('click', () => {
+        if (!isRunning) {
+            const pattern = document.querySelector('input[name="pattern"]:checked');
+
+            if (!pattern) {
+                alert('AパターンまたはBパターンを選択してください');
+                return;
+            }
+
+            if (confirm(`本当に${pattern.value}でスタートしますか？`)) {
+                detectColors(pattern.value);
+                startButton.disabled = true;
+                stopButton.disabled = false;
+            }
+        }
+    });
+
+    // 停止ボタンがクリックされたときの処理
+    stopButton.addEventListener('click', () => {
+        stopDetection();
+        startButton.disabled = false;
+        stopButton.disabled = true;
+    });
+
+    // カメラからの映像を取得
+    async function startCamera() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+        } catch (error) {
+            console.error('カメラのアクセスが拒否されました: ', error);
+        }
+    }
+
+    startCamera();
+    // ビデオストリームが利用可能になったら実行
+    video.addEventListener('canplay', () => {
+        
+    });
+
+    // 色検出
+    function detectColors(pattern) {
+        isRunning = true;
+        const redThreshold = parseInt(redThresholdInput.value, 10);
+        const blueThreshold = parseInt(blueThresholdInput.value, 10);
+        const whiteThreshold = parseInt(whiteThresholdInput.value, 10);
+
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        let redArea = 0;
+        let blueArea = 0;
+        let whiteArea = 0;
+
+        for (let i = 0; i < data.length; i += 4) {
+            const red = data[i];
+            const green = data[i + 1];
+            const blue = data[i + 2];
+
+            if (red > redThreshold && green < blueThreshold && blue < blueThreshold) {
+                redArea++;
+                data[i] = 255;
+                data[i+1]=0;
+                data[i+2]=0;
+            }
+            else if (blue > blueThreshold && red < redThreshold && green < redThreshold) {
+                blueArea++;
+                data[i]=0;
+                data[i+1]=0;
+                data[i+2]=255;
+            }
+            else if (red > whiteThreshold && green > whiteThreshold && blue > whiteThreshold) {
+                whiteArea++;
+                data[i]=255;
+                data[i+1]=255;
+                data[i+2]=255;
+
+            }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+
+
+        const AreaThreshold = parseInt(AreaThresholdInput.value, 10);
+
+        if (redArea > AreaThreshold) {
+            message.textContent = '赤色エリアが設定の閾値を超えました';
+            if(isRedPlayed===false){
+                if (pattern === 'A') {
+                    playAudio(redAudio);
+                } else if (pattern === 'B') {
+                    playAudio(redBAudio);
+                }
+                isRedPlayed=true;
+            }
+        } else if (blueArea > AreaThreshold) {
+            message.textContent = '青色エリアが設定の閾値を超えました';
+            if(isBluePlayed===false){
+                if (pattern === 'A') {
+                    playAudio(blueAudio);
+                } else if (pattern === 'B') {
+                    playAudio(blueBAudio);
+                }
+                isBluePlayed = true;
+            }
+        } else if (whiteArea > AreaThreshold) {
+            message.textContent = '白色エリアが設定の閾値を超えました';
+            if(isWhitePlayed===false){
+                if (pattern === 'A') {
+                    playAudio(whiteAudio);
+                } else if (pattern === 'B') {
+                    playAudio(whiteBAudio);
+                }
+                isWhitePlayed = true;
+            }
+        } else {
+            // 検出が終了したらメッセージをリセット
+            message.textContent = '色のエリアは設定の閾値を超えていません';
+        }
+
+        if (isRunning) {
+            setTimeout(() => {
+                detectColors(pattern);
+            }, 100); // 100ミリ秒ごとに実行
+        }
+    }
+
+    // ストップボタンがクリックされたときの処理
+    function stopDetection() {
+        isRunning = false;
+        message.textContent = '';
+    }
+
+    // 音声再生のための関数
+    function playAudio(audioElement) {
+        if (audioElement.paused) {
+            audioElement.play();
+        }
+    }
+
+</script>
 </html>
