@@ -146,9 +146,10 @@
             }
         }
 
+        startCamera();
         // ビデオストリームが利用可能になったら実行
         video.addEventListener('canplay', () => {
-            startCamera();
+            
         });
 
         // 色検出
