@@ -6,7 +6,7 @@
 </head>
 <body>
     <video id="video" autoplay></video>
-    <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
+    <canvas id="canvas" width="640" height="480" ></canvas>
     <p id="message"></p>
 
     <div>
@@ -45,12 +45,12 @@
     </div>
 
     <div>
-        <audio id="redAudio" src="Red.mp4"></audio>
-        <audio id="blueAudio" src="Blue.mp4"></audio>
-        <audio id="whiteAudio" src="White.mp4"></audio>
-        <audio id="redBAudio" src="Red_b.mp4"></audio>
-        <audio id="blueBAudio" src="Blue_b.mp4"></audio>
-        <audio id="whiteBAudio" src="White_b.mp4"></audio>
+        <audio id="redAudio" src="Red_A.m4a"></audio>
+        <audio id="blueAudio" src="Blue_A.m4a"></audio>
+        <audio id="whiteAudio" src="White_A.m4a"></audio>
+        <audio id="redBAudio" src="Red_B.mp3"></audio>
+        <audio id="blueBAudio" src="Blue_B.mp3"></audio>
+        <audio id="whiteBAudio" src="White_B.mp3"></audio>
     </div>
 
     <script>
@@ -85,6 +85,9 @@
         const patternBRadio = document.getElementById('patternB');
 
         let isRunning = false; // カメラの処理が実行中かどうかを示すフラグ
+        let isRedPlayed = false; // 赤色の音声が流されたかどうかのフラグ。1回ならしたら、その検出が続いている間は鳴らさない
+        let isBluePlayed=false;  // 青色の音声が流されたかどうかのフラグ。1回ならしたら、その検出が続いている間は鳴らさない
+        let isWhitePlayed=false; // 白色の音声が流されたかどうかのフラグ。1回ならしたら、その検出が続いている間は鳴らさない
 
         // スライダーの値が変更されたときに表示用のspan要素に反映する関数
         function updateSliderValue(slider, span) {
@@ -170,39 +173,59 @@
 
                 if (red > redThreshold && green < blueThreshold && blue < blueThreshold) {
                     redArea++;
+                    data[i] = 255;
+                    data[i+1]=0;
+                    data[i+2]=0;
                 }
-
-                if (blue > blueThreshold && red < redThreshold && green < redThreshold) {
+                else if (blue > blueThreshold && red < redThreshold && green < redThreshold) {
                     blueArea++;
+                    data[i]=0;
+                    data[i+1]=0;
+                    data[i+2]=255;
                 }
-
-                if (red > whiteThreshold && green > whiteThreshold && blue > whiteThreshold) {
+                else if (red > whiteThreshold && green > whiteThreshold && blue > whiteThreshold) {
                     whiteArea++;
+                    data[i]=255;
+                    data[i+1]=255;
+                    data[i+2]=255;
+
                 }
             }
+
+            ctx.putImageData(imageData, 0, 0);
+
 
             const AreaThreshold = parseInt(AreaThresholdInput.value, 10);
 
             if (redArea > AreaThreshold) {
                 message.textContent = '赤色エリアが設定の閾値を超えました';
-                if (pattern === 'A') {
-                    playAudio(redAudio);
-                } else if (pattern === 'B') {
-                    playAudio(redBAudio);
+                if(isRedPlayed===false){
+                    if (pattern === 'A') {
+                        playAudio(redAudio);
+                    } else if (pattern === 'B') {
+                        playAudio(redBAudio);
+                    }
+                    isRedPlayed=true;
                 }
             } else if (blueArea > AreaThreshold) {
                 message.textContent = '青色エリアが設定の閾値を超えました';
-                if (pattern === 'A') {
-                    playAudio(blueAudio);
-                } else if (pattern === 'B') {
-                    playAudio(blueBAudio);
+                if(isBluePlayed===false){
+                    if (pattern === 'A') {
+                        playAudio(blueAudio);
+                    } else if (pattern === 'B') {
+                        playAudio(blueBAudio);
+                    }
+                    isBluePlayed = true;
                 }
             } else if (whiteArea > AreaThreshold) {
                 message.textContent = '白色エリアが設定の閾値を超えました';
-                if (pattern === 'A') {
-                    playAudio(whiteAudio);
-                } else if (pattern === 'B') {
-                    playAudio(whiteBAudio);
+                if(isWhitePlayed===false){
+                    if (pattern === 'A') {
+                        playAudio(whiteAudio);
+                    } else if (pattern === 'B') {
+                        playAudio(whiteBAudio);
+                    }
+                    isWhitePlayed = true;
                 }
             } else {
                 // 検出が終了したらメッセージをリセット
