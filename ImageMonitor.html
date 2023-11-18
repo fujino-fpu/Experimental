@@ -3,40 +3,60 @@
 <html>
 <head>
     <title>色の検出</title>
+    <style>
+        .config {
+            /* border: solid thin; */
+            margin: 10px 10px 10px 10px;
+            padding: 5px 5px 5px 5px;
+        }
+    </style>
 </head>
 <body>
-    <video id="video" autoplay></video>
-    <canvas id="canvas" width="640" height="480" ></canvas>
+    <video id="video" autoplay hidden></video>
+    <canvas id="canvas" width="640" height="480" style="border: solid thin;" ></canvas>
+    <canvas id="canvas_r" width="640" height="480" style="border: solid thin;" ></canvas>
+    <canvas id="canvas_b" width="640" height="480" style="border: solid thin;"></canvas>
+    <canvas id="canvas_w" width="640" height="480" style="border: solid thin;"></canvas>
     <p id="message"></p>
 
-    <div>
-        <label for="redThreshold">赤色のしきい値: <span id="redThresholdValue">100</span></label>
-        <input type="range" id="redThreshold" min="0" max="255" value="100">    
+    <div class="config">
+        赤色認識の閾値設定 : 
+        <label for="redThreshold_r">赤色のしきい値（下限）: <span id="redThresholdValue_r">100</span></label>
+        <input type="range" id="redThreshold_r" min="0" max="255" value="100">    
+        <label for="redThreshold_g">緑色のしきい値（上限）: <span id="redThresholdValue_g">100</span></label>
+        <input type="range" id="redThreshold_g" min="0" max="255" value="100">    
+        <label for="redThreshold_b">青色のしきい値（上限）: <span id="redThresholdValue_b">100</span></label>
+        <input type="range" id="redThreshold_b" min="0" max="255" value="100">    
     </div>
 
-    <div>
-        <label for="blueThreshold">青色のしきい値: <span id="blueThresholdValue">100</span></label>
-        <input type="range" id="blueThreshold" min="0" max="255" value="100">
+    <div class="config">
+        青色認識の閾値設定 : 
+        <label for="blueThreshold_r">赤色のしきい値（上限）: <span id="blueThresholdValue_r">100</span></label>
+        <input type="range" id="blueThreshold_r" min="0" max="255" value="100">
+        <label for="blueThreshold_g">緑色のしきい値（上限）: <span id="blueThresholdValue_g">100</span></label>
+        <input type="range" id="blueThreshold_g" min="0" max="255" value="100">
+        <label for="blueThreshold_b">青色のしきい値（下限）: <span id="blueThresholdValue_b">100</span></label>
+        <input type="range" id="blueThreshold_b" min="0" max="255" value="100">
     </div>
 
-    <div>
-        <label for="whiteThreshold">白色のしきい値: <span id="whiteThresholdValue">100</span></label>
+    <div class="config">
+        <label for="whiteThreshold">白色認識の閾値設定（下限）: <span id="whiteThresholdValue">100</span></label>
         <input type="range" id="whiteThreshold" min="0" max="255" value="100">
-    </div>
+    </div class="config">
 
-    <div>
+    <div class="config">
         <label for="AreaThreshold">エリアの面積の閾値: <span id="AreaThresholdValue">100</span></label>
         <input type="range" id="AreaThreshold" min="0" max="1000" value="100">
     </div>
 
-    <div>
+    <div class="config">
         <label for="detectionTime">検出時間（秒）: <span id="detectionTimeValue">3</span></label>
         <input type="range" id="detectionTime" min="1" max="10" value="3">
     </div>
 
-    <div>    
-        <input type="radio" id="patternA" name="pattern" value="A"> Aパターン
-        <input type="radio" id="patternB" name="pattern" value="B"> Bパターン
+    <div class="config">    
+        <input type="radio" id="patternA" name="pattern" value="A"><label for ="patternA">侑子Voice</label>
+        <input type="radio" id="patternB" name="pattern" value="B"><label for ="patternA">合成Voice</label>
     </div>
 
     <div>
@@ -59,14 +79,30 @@
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
+    const canvas_r = document.getElementById('canvas_r');
+    const ctx_r = canvas_r.getContext('2d');
+    const canvas_b = document.getElementById('canvas_b');
+    const ctx_b = canvas_b.getContext('2d');
+    const canvas_w = document.getElementById('canvas_w');
+    const ctx_w = canvas_w.getContext('2d');
     const message = document.getElementById('message');
 
     // 赤色、青色、白色のしきい値のinput要素と表示用のspan要素を取得
-    const redThresholdInput = document.getElementById('redThreshold');
-    const blueThresholdInput = document.getElementById('blueThreshold');
+    const redThresholdInput_r = document.getElementById('redThreshold_r');
+    const redThresholdInput_g = document.getElementById('redThreshold_g');
+    const redThresholdInput_b = document.getElementById('redThreshold_b');
+    const redThresholdValue_r = document.getElementById('redThresholdValue_r');
+    const redThresholdValue_g = document.getElementById('redThresholdValue_g');
+    const redThresholdValue_b = document.getElementById('redThresholdValue_b');
+
+    const blueThresholdInput_r = document.getElementById('blueThreshold_r');
+    const blueThresholdInput_g = document.getElementById('blueThreshold_g');
+    const blueThresholdInput_b = document.getElementById('blueThreshold_b');
+    const blueThresholdValue_r = document.getElementById('blueThresholdValue_r');
+    const blueThresholdValue_g = document.getElementById('blueThresholdValue_g');
+    const blueThresholdValue_b = document.getElementById('blueThresholdValue_b');
+
     const whiteThresholdInput = document.getElementById('whiteThreshold');
-    const redThresholdValue = document.getElementById('redThresholdValue');
-    const blueThresholdValue = document.getElementById('blueThresholdValue');
     const whiteThresholdValue = document.getElementById('whiteThresholdValue');
 
     // エリアの面積の閾値のinput要素と表示用のspan要素を取得
@@ -89,6 +125,8 @@
     let isRedPlayed = false; // 赤色の音声が流されたかどうかのフラグ。1回ならしたら、その検出が続いている間は鳴らさない
     let isBluePlayed=false;  // 青色の音声が流されたかどうかのフラグ。1回ならしたら、その検出が続いている間は鳴らさない
     let isWhitePlayed=false; // 白色の音声が流されたかどうかのフラグ。1回ならしたら、その検出が続いている間は鳴らさない
+    let isDetectStarted = false; //検出がスタートしたかどうか
+    let timeDetectStart; //検出がスタートした時間
 
     // スライダーの値が変更されたときに表示用のspan要素に反映する関数
     function updateSliderValue(slider, span) {
@@ -96,11 +134,23 @@
     }
 
     // スライダーの値が変更されたときに表示を更新
-    redThresholdInput.addEventListener('input', () => {
-        updateSliderValue(redThresholdInput, redThresholdValue);
+    redThresholdInput_r.addEventListener('input', () => {
+        updateSliderValue(redThresholdInput_r, redThresholdValue_r);
     });
-    blueThresholdInput.addEventListener('input', () => {
-        updateSliderValue(blueThresholdInput, blueThresholdValue);
+    redThresholdInput_g.addEventListener('input', () => {
+        updateSliderValue(redThresholdInput_g, redThresholdValue_g);
+    });
+    redThresholdInput_b.addEventListener('input', () => {
+        updateSliderValue(redThresholdInput_b, redThresholdValue_b);
+    });
+    blueThresholdInput_r.addEventListener('input', () => {
+        updateSliderValue(blueThresholdInput_r, blueThresholdValue_r);
+    });
+    blueThresholdInput_g.addEventListener('input', () => {
+        updateSliderValue(blueThresholdInput_g, blueThresholdValue_g);
+    });
+    blueThresholdInput_b.addEventListener('input', () => {
+        updateSliderValue(blueThresholdInput_b, blueThresholdValue_b);
     });
     whiteThresholdInput.addEventListener('input', () => {
         updateSliderValue(whiteThresholdInput, whiteThresholdValue);
@@ -146,92 +196,90 @@
             console.error('カメラのアクセスが拒否されました: ', error);
         }
     }
-
     startCamera();
-    // ビデオストリームが利用可能になったら実行
-    video.addEventListener('canplay', () => {
-        
-    });
 
     // 色検出
     function detectColors(pattern) {
         isRunning = true;
-        const redThreshold = parseInt(redThresholdInput.value, 10);
-        const blueThreshold = parseInt(blueThresholdInput.value, 10);
+        const redThreshold_r = parseInt(redThresholdInput_r.value, 10);
+        const redThreshold_g = parseInt(redThresholdInput_g.value, 10);
+        const redThreshold_b = parseInt(redThresholdInput_b.value, 10);
+        const blueThreshold_r = parseInt(blueThresholdInput_r.value, 10);
+        const blueThreshold_g = parseInt(blueThresholdInput_g.value, 10);
+        const blueThreshold_b = parseInt(blueThresholdInput_b.value, 10);
         const whiteThreshold = parseInt(whiteThresholdInput.value, 10);
+        const timeThreshold = parseInt(detectionTimeInput.value, 10);
 
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        ctx_r.drawImage(video, 0, 0, canvas_r.width, canvas_r.height);
+        ctx_b.drawImage(video, 0, 0, canvas_b.width, canvas_b.height);
+        ctx_w.drawImage(video, 0, 0, canvas_w.width, canvas_w.height);
+        const imageData = ctx_r.getImageData(0, 0, canvas.width, canvas.height);
+        const imageData_r = ctx_r.getImageData(0, 0, canvas_r.width, canvas_r.height);
+        const imageData_b = ctx_b.getImageData(0, 0, canvas_b.width, canvas_b.height);
+        const imageData_w = ctx_w.getImageData(0, 0, canvas_w.width, canvas_w.height);
         const data = imageData.data;
+        const data_r = imageData_r.data;
+        const data_b = imageData_b.data;
+        const data_w = imageData_w.data;
 
         let redArea = 0;
         let blueArea = 0;
         let whiteArea = 0;
 
-        for (let i = 0; i < data.length; i += 4) {
+        for (let i = 0; i < data.length; i += 4) { // rbwどれ使っても一緒やけど、とりあず、そのままにしてみる
             const red = data[i];
             const green = data[i + 1];
             const blue = data[i + 2];
 
-            if (red > redThreshold && green < blueThreshold && blue < blueThreshold) {
+            if (red > redThreshold_r && green < redThreshold_g && blue < redThreshold_b) {
                 redArea++;
-                data[i] = 255;
-                data[i+1]=0;
-                data[i+2]=0;
+                data_r[i] = 255;
+                data_r[i+1]=0;
+                data_r[i+2]=0;
             }
-            else if (blue > blueThreshold && red < redThreshold && green < redThreshold) {
+            else if (blue > blueThreshold_b && red < blueThreshold_r && green < blueThreshold_g) {
                 blueArea++;
-                data[i]=0;
-                data[i+1]=0;
-                data[i+2]=255;
+                data_b[i]=0;
+                data_b[i+1]=0;
+                data_b[i+2]=255;
             }
             else if (red > whiteThreshold && green > whiteThreshold && blue > whiteThreshold) {
                 whiteArea++;
-                data[i]=255;
-                data[i+1]=255;
-                data[i+2]=255;
+                data_w[i]=255;
+                data_w[i+1]=255;
+                data_w[i+2]=255;
 
             }
         }
 
-        ctx.putImageData(imageData, 0, 0);
+        ctx_r.putImageData(imageData_r, 0, 0);
+        ctx_b.putImageData(imageData_b, 0, 0);
+        ctx_w.putImageData(imageData_w, 0, 0);
 
 
         const AreaThreshold = parseInt(AreaThresholdInput.value, 10);
 
-        if (redArea > AreaThreshold) {
-            message.textContent = '赤色エリアが設定の閾値を超えました';
-            if(isRedPlayed===false){
-                if (pattern === 'A') {
-                    playAudio(redAudio);
-                } else if (pattern === 'B') {
-                    playAudio(redBAudio);
-                }
-                isRedPlayed=true;
+        if (redArea > AreaThreshold || blueArea > AreaThreshold || whiteArea > AreaThreshold) {
+            const currenttime = Date.now();
+            if(isDetectStarted==false){
+                isDetectStarted=true;
+                timeDetectStart = currenttime; 
             }
-        } else if (blueArea > AreaThreshold) {
-            message.textContent = '青色エリアが設定の閾値を超えました';
-            if(isBluePlayed===false){
-                if (pattern === 'A') {
-                    playAudio(blueAudio);
-                } else if (pattern === 'B') {
-                    playAudio(blueBAudio);
-                }
-                isBluePlayed = true;
+            else if(currenttime - timeDetectStart > timeThreshold * 1000){
+                if (redArea > AreaThreshold) { PlayMessage(pattern, "red"); }
+                else if (blueArea > AreaThreshold) { PlayMessage(pattern, "blue"); }
+                else{ PlayMessage(pattern, "white"); } //whiteArea > AreaThreshold           
             }
-        } else if (whiteArea > AreaThreshold) {
-            message.textContent = '白色エリアが設定の閾値を超えました';
-            if(isWhitePlayed===false){
-                if (pattern === 'A') {
-                    playAudio(whiteAudio);
-                } else if (pattern === 'B') {
-                    playAudio(whiteBAudio);
-                }
-                isWhitePlayed = true;
-            }
+
         } else {
             // 検出が終了したらメッセージをリセット
             message.textContent = '色のエリアは設定の閾値を超えていません';
+            isRedPlayed = false;
+            isBluePlayed= false;
+            isWhitePlayed = false;
+            isDetectStarted=false;
+            //console.log("識別エリアなし")
         }
 
         if (isRunning) {
@@ -239,6 +287,44 @@
                 detectColors(pattern);
             }, 100); // 100ミリ秒ごとに実行
         }
+    }
+
+    //検出したときの動き
+    function PlayMessage(pattern, color){
+        if(color === "red"){
+            message.textContent = '赤色エリアが設定の閾値を超えました';
+            if(isRedPlayed==false){
+                if (pattern === 'A') {
+                    playAudio(redAudio);
+                } else if (pattern === 'B') {
+                    playAudio(redBAudio);
+                }
+                isRedPlayed=true;
+            }        
+        }
+        else if(color === "blue"){
+            message.textContent = '青色エリアが設定の閾値を超えました';
+            if(isBluePlayed==false){
+                if (pattern === 'A') {
+                    playAudio(blueAudio);
+                } else if (pattern === 'B') {
+                    playAudio(blueBAudio);
+                }
+                isBluePlayed = true;
+            }
+        }
+        else if(color === "white"){
+            message.textContent = '白色エリアが設定の閾値を超えました';
+            if(isWhitePlayed==false){
+                if (pattern === 'A') {
+                    playAudio(whiteAudio);
+                } else if (pattern === 'B') {
+                    playAudio(whiteBAudio);
+                }
+                isWhitePlayed = true;
+            }
+        }
+
     }
 
     // ストップボタンがクリックされたときの処理
@@ -253,6 +339,8 @@
             audioElement.play();
         }
     }
+
+
 
 </script>
 </html>
