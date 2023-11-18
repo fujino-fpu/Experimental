@@ -14,7 +14,7 @@
             position: relative;
         }
 
-        #canvas-container {
+        #canvas-wrapper {
             position: relative; 
             width: 640px;
             height: 480px;
@@ -46,14 +46,16 @@
 </head>
 <body>
     <video id="video" autoplay hidden></video>
-    <div id="canvas-container">
-        <canvas id="canvas"   width="640" height="480"  ></canvas>
-        <canvas id="canvas_2" width="640" height="480" ></canvas>
+    <div id = "canvas_container">
+        <div id="canvas-wrapper">
+            <canvas id="canvas"   width="640" height="480"  ></canvas>
+            <canvas id="canvas_2" width="640" height="480" ></canvas>
+        </div>
+        <canvas id="canvas_r" width="640" height="480" ></canvas>
+        <canvas id="canvas_b" width="640" height="480" ></canvas>
+        <canvas id="canvas_w" width="640" height="480"></canvas>
     </div>
-    <canvas id="canvas_r" width="640" height="480" ></canvas>
-    <canvas id="canvas_b" width="640" height="480" ></canvas>
-    <canvas id="canvas_w" width="640" height="480"></canvas>
-    <p id="message"></p>
+<p id="message"></p>
     <div id = "Menu">
         <div class="config">
             <div>
@@ -99,13 +101,16 @@
         </div>
 
         <div class="config">    
-            <input type="radio" id="patternA" name="pattern" value="A"><label for ="patternA">侑子Voice</label>
-            <input type="radio" id="patternB" name="pattern" value="B"><label for ="patternB">合成Voice</label>
+            <input type="radio" id="patternA" name="pattern" value="A"><label for ="patternA">A: 侑子Voice</label>
+            <input type="radio" id="patternB" name="pattern" value="B"><label for ="patternB">B: 合成Voice</label>
         </div>
 
         <div>
             <button id="startButton">スタート</button>
             <button id="stopButton" disabled>停止</button>
+        </div>
+        <div>
+            <input type ="checkbox" id="switchDisplay"><label for="switchDisplay">Canvasを非表示にする場合にはこちらをチェック</label>
         </div>
     </div>
 
@@ -170,6 +175,9 @@
     const startButton = document.getElementById('startButton');
     const stopButton = document.getElementById('stopButton');
 
+    //　Canvasの表示・非表示切り替えチェックボックスを取得
+    const switchDisplay = document.getElementById('switchDisplay');
+
     // ラジオボタンを取得
     const patternARadio = document.getElementById('patternA');
     const patternBRadio = document.getElementById('patternB');
@@ -181,10 +189,18 @@
     let isRedDetectStarted = false; //検出がスタートしたかどうか
     let isBlueDetectStarted = false; //検出がスタートしたかどうか
     let isWhiteDetectStarted = false; //検出がスタートしたかどうか
-    let timeDetectStart_r; //赤の検出がスタートした時間
-    let timeDetectStart_b; //赤の検出がスタートした時間
-    let timeDetectStart_w; //赤の検出がスタートした時間
+    let timeDetectStart; //色の検出がスタートした時間
     let pattern; // Voiceの設定
+
+    //Canvasの表示・非表示の切り替え
+    switchDisplay.addEventListener('change',() => {
+        if(switchDisplay.checked){
+            document.getElementById("canvas_container").hidden=true;
+        }
+        else{
+            document.getElementById("canvas_container").hidden=false;    
+        }
+    });
 
     // スライダーの値が変更されたときに表示用のspan要素に反映する関数
     function updateSliderValue(slider, span) {
@@ -378,49 +394,61 @@
 
 
         if(isRunning){    //音声出力がスタートしてるなら
-            if(redArea > AreaThreshold){
+            if(!isRedDetectStarted && !isBlueDetectStarted && !isWhiteDetectStarted){
+                message.textContent = '色のエリアは設定の閾値を超えていません';
+            }
+            
+            if(redArea > AreaThreshold && !isBlueDetectStarted && !isWhiteDetectStarted){ // 青と白がまだ検出スタートしてなくて赤がしきい値越えたら
                 const currenttime = Date.now();
+                message.textContent = '赤色エリアが設定の閾値を超えました';
                 if(isRedDetectStarted==false){
                     isRedDetectStarted=true;
-                    timeDetectStart_r = currenttime; 
+                    timeDetectStart = currenttime; 
                 }
-                else if(currenttime - timeDetectStart_r > timeThreshold * 1000){
-                    console.log("赤＿経過時間："+String((currenttime - timeDetectStart_r)/1000));
-                    PlayMessage("red");     
+                else if(currenttime - timeDetectStart > timeThreshold * 1000){
+                    PlayMessage("red");  
+                    message.textContent = "赤の声掛け完了"   
+                }
+                else{
+                    message.textContent = message.textContent+'声掛けまで残り:'+ String(Math.ceil(timeThreshold-(currenttime-timeDetectStart)/1000));
                 }
             }else{
-                message.textContent = '色のエリアは設定の閾値を超えていません';
                 isRedPlayed = false;
                 isRedDetectStarted=false;
             }
-            if(blueArea > AreaThreshold){
+
+            if(blueArea > AreaThreshold && !isRedDetectStarted && !isWhiteDetectStarted){ // 赤と白がまだ検出スタートしてなくて青がしきい値越えたら
                 const currenttime = Date.now();
+                message.textContent = '青色エリアが設定の閾値を超えました';
                 if(isBlueDetectStarted==false){
                     isBlueDetectStarted=true;
-                    timeDetectStart_b = currenttime; 
+                    timeDetectStart = currenttime; 
                 }
-                else if(currenttime - timeDetectStart_b > timeThreshold * 1000){
-                    console.log("青＿経過時間："+String((currenttime - timeDetectStart_b)/1000));
-                    PlayMessage("blue");        
+                else if(currenttime - timeDetectStart > timeThreshold * 1000){
+                   PlayMessage("blue");  
+                    message.textContent = "青の声掛け完了"         
+                }else{
+                    message.textContent = message.textContent+'声掛けまで残り:'+ String(Math.ceil(timeThreshold-(currenttime-timeDetectStart)/1000));
                 }
             }else{
-                message.textContent = '色のエリアは設定の閾値を超えていません';
                 isBluePlayed= false;
                 isBlueDetectStarted=false;
             }
-            if(whiteArea > AreaThreshold){
+
+            if(whiteArea > AreaThreshold && !isRedDetectStarted && !isBlueDetectStarted){ // 青と赤がまだ検出スタートしてなくて白がしきい値越えたら
                 const currenttime = Date.now();
+                message.textContent = '白色エリアが設定の閾値を超えました';
                 if(isWhiteDetectStarted==false){
                     isWhiteDetectStarted=true;
-                    timeDetectStart_w = currenttime; 
+                    timeDetectStart = currenttime; 
                 }
-                else if(currenttime - timeDetectStart_w > timeThreshold * 1000){
-                    console.log("白＿経過時間："+String((currenttime - timeDetectStart_w)/1000));
+                else if(currenttime - timeDetectStart > timeThreshold * 1000){
                     PlayMessage("white");        
+                    message.textContent = "白の声掛け完了"         
+                }else{
+                    message.textContent = message.textContent+'声掛けまで残り:'+ String(Math.ceil(timeThreshold-(currenttime-timeDetectStart)/1000));
                 }
             }else {
-                // 検出が終了したらメッセージをリセット
-                message.textContent = '色のエリアは設定の閾値を超えていません';
                 isWhitePlayed = false;
                 isWhiteDetectStarted=false;
             }
@@ -436,7 +464,6 @@
 
     function PlayMessage(color){
         if(color === "red"){
-            message.textContent = '赤色エリアが設定の閾値を超えました';
             if(isRedPlayed==false){
                 if (pattern.value === 'A') {
                     playAudio(redAudio);
@@ -447,7 +474,6 @@
             }        
         }
         else if(color === "blue"){
-            message.textContent = '青色エリアが設定の閾値を超えました';
             if(isBluePlayed==false){
                 if (pattern.value === 'A') {
                     playAudio(blueAudio);
@@ -458,7 +484,6 @@
             }
         }
         else if(color === "white" ){
-            message.textContent = '白色エリアが設定の閾値を超えました';
             if(isWhitePlayed==false){
                 if (pattern.value === 'A') {
                     playAudio(whiteAudio);
