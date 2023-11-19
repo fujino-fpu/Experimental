@@ -55,7 +55,7 @@
         <canvas id="canvas_b" width="640" height="480" ></canvas>
         <canvas id="canvas_w" width="640" height="480"></canvas>
     </div>
-<p id="message"></p>
+    <p id="message"></p>
     <div id = "Menu">
         <div class="config">
             <div>
@@ -121,6 +121,13 @@
         <audio id="redBAudio" src="ImageMonitorVoice/Red_B.mp3"></audio>
         <audio id="blueBAudio" src="ImageMonitorVoice/Blue_B.mp3"></audio>
         <audio id="whiteBAudio" src="ImageMonitorVoice/White_B.mp3"></audio>
+    </div>
+
+    <div id = "Castella">
+        <img src="ImageMonitorVoice/カステラ.png" id="Standing"></img>
+        <video src="ImageMonitorVoice/Blink.mp4" id ="Blink"   muted playsinline hidden></video>
+        <video src="ImageMonitorVoice/Patapata.mp4" id = "Patapata"   muted playsinline hidden></video>
+        <video src="ImageMonitorVoice/PyonBata.mp4" id = "PyonBata" muted playsinline hidden></video>
     </div>
 </body>
 
@@ -465,6 +472,9 @@
     function PlayMessage(color){
         if(color === "red"){
             if(isRedPlayed==false){
+                StandingImg.hidden = true;
+                PyonBataMovie.hidden = false;
+                PyonBataMovie.play();
                 if (pattern.value === 'A') {
                     playAudio(redAudio);
                 } else if (pattern.value === 'B') {
@@ -475,6 +485,9 @@
         }
         else if(color === "blue"){
             if(isBluePlayed==false){
+                StandingImg.hidden = true;
+                PyonBataMovie.hidden = false;
+                PyonBataMovie.play();
                 if (pattern.value === 'A') {
                     playAudio(blueAudio);
                 } else if (pattern.value === 'B') {
@@ -485,6 +498,9 @@
         }
         else if(color === "white" ){
             if(isWhitePlayed==false){
+                StandingImg.hidden = true;
+                PyonBataMovie.hidden = false;
+                PyonBataMovie.play();
                 if (pattern.value === 'A') {
                     playAudio(whiteAudio);
                 } else if (pattern.value === 'B') {
@@ -508,7 +524,45 @@
         }
     }
 
+    //カステラをランダムで瞬きとかパタパタとかさせる
+    const StandingImg = document.getElementById("Standing");
+    const BlinkMovie = document.getElementById("Blink");
+    const PatapataMovie = document.getElementById("Patapata");
+    const PyonBataMovie = document.getElementById("PyonBata");
 
+    setInterval(()=>{
+        const seed = Math.floor(Math.random()*3);
+        console.log("seed:" + seed);
+        if(seed == 0){
+            StandingImg.hidden = true;
+            BlinkMovie.hidden = false;
+            BlinkMovie.play();
+        }else if(seed==1){
+            StandingImg.hidden = true;
+            PatapataMovie.hidden = false;
+            PatapataMovie.play();          
+        }
 
-</script>
+    },5000);
+
+    BlinkMovie.addEventListener("ended",()=>{
+        console.log("Blink End");
+        StandingImg.hidden = false;
+        BlinkMovie.hidden = true;
+    });
+
+    PatapataMovie.addEventListener("ended",()=>{
+        console.log("Patapata End");
+        StandingImg.hidden = false;
+        PatapataMovie.hidden = true;    
+    });
+
+    
+    PyonBataMovie.addEventListener("ended",()=>{
+        console.log("PyonBata End");
+        StandingImg.hidden = false;
+        PyonBataMovie.hidden = true;
+    });
+    
+    </script>
 </html>
