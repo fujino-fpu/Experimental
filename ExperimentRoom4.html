@@ -108,7 +108,19 @@
     const button_RecordStart = document.getElementById("recordStart");
     const button_RecordStop = document.getElementById("recordStop");
     let recordedBlobs;
+    let IntervalID;
     button_RecordStart.addEventListener('click',function(){
+        startRecording();
+        $("#recordStop").prop("disabled",false);//停止ボタンを押せるようにする
+        $("#recordStart").prop("disabled",true);//録画ボタンを押せないようにする
+
+        IntervalID = setInterval(function(){
+            stopRecording();
+            startRecording();
+        },2*60*1000);
+    });
+
+    function startRecording(){
         let options = {mimeType: 'video/webm;codecs=vp9'};
         recordedBlobs = [];
         mediaRecorder = new MediaRecorder(localStream, options);
@@ -118,10 +130,16 @@
             }
         };
         mediaRecorder.start();
-        $("#recordStop").prop("disabled",false);//停止ボタンを押せるようにする
-    });
+    }
 
     button_RecordStop.addEventListener('click', function(){
+        stopRecording();
+        clearInterval(IntervalID);
+        $("#recordStop").prop("disabled",true);//停止ボタンを押せるようにする
+        $("#recordStart").prop("disabled",false);//録画ボタンを押せないようにする
+    });
+
+    function stopRecording(){
         mediaRecorder.onstop = function(e){
             var DateStr = getDateString();
             var fname = DateStr["y"]+"_"+DateStr["m"]+"_"+DateStr["d"]+"_"+DateStr["h"]+"_"+DateStr["min"];
@@ -140,8 +158,7 @@
             }, 100);
         };
         mediaRecorder.stop();
-
-    });
+    }
 
     function getDateString(){
         var currentdate = new Date();
