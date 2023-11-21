@@ -118,6 +118,7 @@
             }
         };
         mediaRecorder.start();
+        $("#recordStop").prop("disabled",false);//停止ボタンを押せるようにする
     });
 
     button_RecordStop.addEventListener('click', function(){
