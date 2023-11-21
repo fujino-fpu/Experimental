@@ -17,11 +17,13 @@
             <option value="0">不使用</option>
         </select>
         <input type="checkbox" id="Check_AudioOut">管理側からの音声を出力する</input>
-        <button id="local-Start">スタート</button> 
+        <button id="local-Start">ローカルスタート</button> 
+        <button id="local-Stop" disabled>ローカルストップ</button> 
         <button id="make-call" disabled>参加</button>
         <button id="leave-call" disabled>退出</button>
         <div style="margin-top: 10px;">
             PC名: <input type="text" id = "PCname" value="PC名をつけてください"></input>
+            1ファイルの動画の長さ: <input type="number" id = "MovieLength" value=20>分</input>
             <button id="recordStart" disabled>ローカル録画</button>
             <button id="recordStop" disabled>ローカル録画停止</button>
             <canvas id="recordCanvas" hidden width="640" height="480"></canvas>
@@ -96,17 +98,32 @@
             videoElm.srcObject = localStream;
             videoElm.play();
 
-            $("#make-call").prop("disabled",false);//最初「参加」ボタンは押せないが、メディアストリームが取得できるとボタンを押せるようになる
             $("#local-Start").prop("disabled",true);//スタートすると「スタート」ボタンは押せなくする。
+            $("#local_stop").prop("disabled",false);//ローカルストップボタンを押せるようにする
+            $("#make-call").prop("disabled",false);//最初「参加」ボタンは押せないが、メディアストリームが取得できるとボタンを押せるようになる
             $("#recordStart").prop("disabled",false);//録画ボタンを押せるようにする
-            
+
         }
         catch(error){
                     // 失敗時にはエラーログを出力
                 console.error('mediaDevice.getUserMedia() error:', error);          
                 return;
         }
-    })
+    });
+
+    $("#local-Stop").on("click", function() {
+        if(document.getElementById("recordStart").disabled==true){
+            alert("ローカル録画中です。先にローカル録画を停止させてください");
+            return;
+        }
+        localStream.getTracks().forEach(track => {//ストリームの取得を止める
+            track.stop();
+         });
+        $("#local-Start").prop("disabled",false);//スタートすると「スタート」ボタンは押せなくする
+        $("#local_stop").prop("disabled",true);//ローカルストップボタンを押せるようにする
+        $("#make-call").prop("disabled",true);//最初「参加」ボタンは押せないが、メディアストリームが取得できるとボタンを押せるようになる
+    });
+
 
 /************    
  * 録画処理
@@ -137,14 +154,16 @@
         $("#recordStop").prop("disabled",false);//停止ボタンを押せるようにする
         $("#recordStart").prop("disabled",true);//録画ボタンを押せないようにする
         $("#PCname").prop("disabled",true)// 録画スタートしたらPC名を変更できないようにする
+        $("#MovieLength").prop("disabled",true)// 録画スタートしたら1ファイルの長さを変更できなくする
         let current1,current2;
+        const movielength = Number(document.getElementById("MovieLength"));
         IntervalID = setInterval(function(){
             current1= new Date();
             stopRecording();
             startRecording();
             current2 = new Date()
             console.log(current2.getTime()-current1.getTime()+"ミリ秒");
-        },1*60*1000);
+        },movielength*60*1000);
     });
 
     //メディアレコーダがデータを取得するたびに発生するイベント
@@ -227,6 +246,8 @@
     // Room参加処理
     document.getElementById('make-call').onclick = () => {
         $("#local-Start").prop("disabled",true);//スタートボタンを押せなくする
+        $("#local-Stop").prop("disabled",true);//ストップボタンを押せなくする
+
         const room = peer.joinRoom('FujinoLabsExperimentalRoom2', {mode:'mesh', stream: localStream});
         setupCallEventHandlers(room)
         $("#my-video").prop("hidden",true);
