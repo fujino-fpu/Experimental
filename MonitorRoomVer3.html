@@ -345,6 +345,10 @@ $(document).ready(function(){
 //************************************
     //録画スタートボタン
     $("#Button_record").on("click", function(){
+        if(!$("#SoundOFFVideo").prop("checked") && !$("#SoundOnVideo").prop("checked")){
+            alert("音声ありか、音声なしかを選択してください");
+            return;
+        }
         mixVideoAudio();
         if(startRecording()){
             $("#Button_record").text("録画中");
