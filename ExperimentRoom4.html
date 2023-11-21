@@ -158,7 +158,7 @@
         $("#PCname").prop("disabled",true)// 録画スタートしたらPC名を変更できないようにする
         $("#MovieLength").prop("disabled",true)// 録画スタートしたら1ファイルの長さを変更できなくする
         let current1,current2;
-        const movielength = Number(document.getElementById("MovieLength"));
+        const movielength = Number(document.getElementById("MovieLength").value);
         console.log(movielength);
         IntervalID = setInterval(function(){
             current1= new Date();
