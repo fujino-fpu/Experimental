@@ -139,7 +139,7 @@
     function startRecording(){
         let options = {mimeType: 'video/webm;codecs=vp9', audioBitsPerSecond: 128000, videoBitsPerSecond : 1000000};
         recordedBlobs = [];
-        const videostream = recordCanvas.captureStream(25);//Canvasからビデオストリーム取得。フレームレートは25
+        const videostream = recordCanvas.captureStream(10);//Canvasからビデオストリーム取得。フレームレートは10
         const tracks = [...videostream.getTracks(), ...localStream.getAudioTracks()];//Canvasのストリームの動画トラックと、LocalStreamからの音声トラックを結合
         const combinedStream = new MediaStream(tracks);//結合したトラックで新しいストリームを錯視絵
         //mediaRecorder = new MediaRecorder(localStream, options);
@@ -163,8 +163,8 @@
 
     function stopRecording(){
         mediaRecorder.onstop = function(e){
-            var DateStr = getDateString();
-            var PCname = document.getElementById("PCname").value;
+            var PCname = document.getElementById("PCname").value;//PC名取得
+            var DateStr = getDateString(); //日付取得
             var fname = PCname+"_"+DateStr["y"]+"_"+DateStr["m"]+"_"+DateStr["d"]+"_"+DateStr["h"]+"_"+DateStr["min"]+"_"+DateStr["sec"];
 
             var blob = new Blob(recordedBlobs, {type: 'video/webm'});
