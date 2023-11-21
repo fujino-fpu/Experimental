@@ -78,9 +78,11 @@
             audio:{deviceId: $("#AudioList").val(), echoCancellation:true, noiseSuppression:true}
         }
         if($("#VideoList").val()==0){
+            if(!window.confirm("ビデオデバイスが選択されていません。映像は取得できませんが構いませんか?")){ return;}
             constraints["video"]=false;
         }
         if($("#AudioList").val()==0){
+            if(!window.confirm("音声デバイスが選択されていません。音声は取得できませんが構いませんか?")){ return;}
             constraints["audio"]=false;
         }
         if(constraints["audio"]==false && constraints["video"]==false){
@@ -125,15 +127,25 @@
 
 
     button_RecordStart.addEventListener('click',function(){
+        if($("#VideoList").val()==0){
+            if(!window.confirm("ビデオデバイスが選択されていません。映像は保存できませんが構いませんか?")){return;}
+        }
+        if($("#AudioList").val()==0){
+            if(!window.confirm("音声デバイスが選択されていません。音声は保存できませんが構いませんか?")){return;}
+        }
         startRecording();
         $("#recordStop").prop("disabled",false);//停止ボタンを押せるようにする
         $("#recordStart").prop("disabled",true);//録画ボタンを押せないようにする
         $("#PCname").prop("disabled",true)// 録画スタートしたらPC名を変更できないようにする
-
+        let current1,current2;
         IntervalID = setInterval(function(){
+            current1= new Date();
             stopRecording();
             startRecording();
-        },2*60*1000);
+            current2 = new Date()
+            console.log(current2.getTime()-current1.getTime()+"ミリ秒");
+
+        },1*60*1000);
     });
 
     function startRecording(){
