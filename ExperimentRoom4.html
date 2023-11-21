@@ -168,12 +168,7 @@
         },movielength*60*1000);
     });
 
-    //メディアレコーダがデータを取得するたびに発生するイベント
-    mediaRecorder.ondataavailable = function(e){
-        if(e.data && e.data.size>0){
-            recordedBlobs.push(e.data);
-        }
-    };   
+
     
     //録画をスタートさせる関数
     function startRecording(){
@@ -184,6 +179,12 @@
         const combinedStream = new MediaStream(tracks);//結合したトラックで新しいストリームを錯視絵
         //mediaRecorder = new MediaRecorder(localStream, options);
         mediaRecorder = new MediaRecorder(combinedStream, options);//結合したストリームで録画
+        //メディアレコーダがデータを取得するたびに発生するイベント
+        mediaRecorder.ondataavailable = function(e){
+            if(e.data && e.data.size>0){
+                recordedBlobs.push(e.data);
+            }
+        };   
         mediaRecorder.start();
     }
 
@@ -197,7 +198,7 @@
     });
 
     //メディアレコーダがストップしたときに発生するイベント
-    mediaRecorder.onstop = function(e){
+    function SaveMovieFile(){
         const PCname = document.getElementById("PCname").value;//PC名取得
         const DateStr = getDateString(); //日付取得
         const fname = PCname+"_"+DateStr["y"]+"_"+DateStr["m"]+"_"+DateStr["d"]+"_"+DateStr["h"]+"_"+DateStr["min"]+"_"+DateStr["sec"];
@@ -218,6 +219,7 @@
     
     //録画をストップさせる関数
     function stopRecording(){
+        mediaRecorder.onstop = SaveMovieFile;
         mediaRecorder.stop();
     }
 
