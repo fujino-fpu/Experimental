@@ -24,6 +24,7 @@
             PC名: <input type="text" id = "PCname" value="PC名をつけてください"></input>
             <button id="recordStart" disabled>ローカル録画</button>
             <button id="recordStop" disabled>ローカル録画停止</button>
+            <canvas id="recordCanvas" hidden width="640" height="480"></canvas>
         </div>
 
     </div>
@@ -112,6 +113,17 @@
     const button_RecordStop = document.getElementById("recordStop");
     let recordedBlobs;
     let IntervalID;
+    //まずはキャンバスに動画を保存する。録画ではCanvasからストリームを流し込む。
+    const recordCanvas = document.getElementById("recordCanvas");
+    const ctx = recordCanvas.getContext("2d");
+    function _canvasUpdate() {
+        const videoElm = document.getElementById('my-video');
+        ctx.drawImage(videoElm, 0,0,640,480)
+        requestAnimationFrame(_canvasUpdate);
+    }
+    _canvasUpdate();
+
+
     button_RecordStart.addEventListener('click',function(){
         startRecording();
         $("#recordStop").prop("disabled",false);//停止ボタンを押せるようにする
@@ -127,7 +139,11 @@
     function startRecording(){
         let options = {mimeType: 'video/webm;codecs=vp9', audioBitsPerSecond: 128000, videoBitsPerSecond : 1000000};
         recordedBlobs = [];
-        mediaRecorder = new MediaRecorder(localStream, options);
+        const videostream = recordCanvas.captureStream(25);//Canvasからビデオストリーム取得。フレームレートは25
+        const tracks = [...videostream.getTracks(), ...localStream.getAudioTracks()];//Canvasのストリームの動画トラックと、LocalStreamからの音声トラックを結合
+        const combinedStream = new MediaStream(tracks);//結合したトラックで新しいストリームを錯視絵
+        //mediaRecorder = new MediaRecorder(localStream, options);
+        mediaRecorder = new MediaRecorder(combinedStream, options);//結合したストリームで録画
         mediaRecorder.ondataavailable = function(e){
             if(e.data && e.data.size>0){
                 recordedBlobs.push(e.data);
@@ -149,7 +165,7 @@
         mediaRecorder.onstop = function(e){
             var DateStr = getDateString();
             var PCname = document.getElementById("PCname").value;
-            var fname = PCname+"_"+["y"]+"_"+DateStr["m"]+"_"+DateStr["d"]+"_"+DateStr["h"]+"_"+DateStr["min"]+DateStr["sec"];
+            var fname = PCname+"_"+DateStr["y"]+"_"+DateStr["m"]+"_"+DateStr["d"]+"_"+DateStr["h"]+"_"+DateStr["min"]+"_"+DateStr["sec"];
 
             var blob = new Blob(recordedBlobs, {type: 'video/webm'});
             var url = window.URL.createObjectURL(blob);

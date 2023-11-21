@@ -200,7 +200,7 @@ $(document).ready(function(){
             }else{//実験室端末からの動画
                 //動画を追加する video要素のid はpeeridにする
                 const videoDom =$('<video autoplay hidden>');//muted style="visibility: hidden;"
-                videoDom.get(0).srcObject=stream;　  //videoDom.get(0).srcObject= new MediaStream( stream.getVideoTracks()); これだと動画だけがきて音声が来ない
+                videoDom.get(0).srcObject=stream;  //videoDom.get(0).srcObject= new MediaStream( stream.getVideoTracks()); これだと動画だけがきて音声が来ない
                 videoDom.get(0).id = stream.peerId;
                 videoDom.width(640);
                 videoDom.height(480); //高さは480で固定にしよう
