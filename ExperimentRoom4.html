@@ -144,23 +144,25 @@
             startRecording();
             current2 = new Date()
             console.log(current2.getTime()-current1.getTime()+"ミリ秒");
-
         },1*60*1000);
     });
 
+    //メディアレコーダがデータを取得するたびに発生するイベント
+    mediaRecorder.ondataavailable = function(e){
+        if(e.data && e.data.size>0){
+            recordedBlobs.push(e.data);
+        }
+    };   
+    
+    //録画をスタートさせる関数
     function startRecording(){
-        let options = {mimeType: 'video/webm;codecs=vp9', audioBitsPerSecond: 128000, videoBitsPerSecond : 500000};//ビデオのビットレートは500kbps
+        const options = {mimeType: 'video/webm;codecs=vp9', audioBitsPerSecond: 128000, videoBitsPerSecond : 500000};//ビデオのビットレートは500kbps
         recordedBlobs = [];
         const videostream = recordCanvas.captureStream(10);//Canvasからビデオストリーム取得。フレームレートは10
         const tracks = [...videostream.getTracks(), ...localStream.getAudioTracks()];//Canvasのストリームの動画トラックと、LocalStreamからの音声トラックを結合
         const combinedStream = new MediaStream(tracks);//結合したトラックで新しいストリームを錯視絵
         //mediaRecorder = new MediaRecorder(localStream, options);
         mediaRecorder = new MediaRecorder(combinedStream, options);//結合したストリームで録画
-        mediaRecorder.ondataavailable = function(e){
-            if(e.data && e.data.size>0){
-                recordedBlobs.push(e.data);
-            }
-        };
         mediaRecorder.start();
     }
 
@@ -173,25 +175,28 @@
 
     });
 
-    function stopRecording(){
-        mediaRecorder.onstop = function(e){
-            var PCname = document.getElementById("PCname").value;//PC名取得
-            var DateStr = getDateString(); //日付取得
-            var fname = PCname+"_"+DateStr["y"]+"_"+DateStr["m"]+"_"+DateStr["d"]+"_"+DateStr["h"]+"_"+DateStr["min"]+"_"+DateStr["sec"];
+    //メディアレコーダがストップしたときに発生するイベント
+    mediaRecorder.onstop = function(e){
+        const PCname = document.getElementById("PCname").value;//PC名取得
+        const DateStr = getDateString(); //日付取得
+        const fname = PCname+"_"+DateStr["y"]+"_"+DateStr["m"]+"_"+DateStr["d"]+"_"+DateStr["h"]+"_"+DateStr["min"]+"_"+DateStr["sec"];
 
-            var blob = new Blob(recordedBlobs, {type: 'video/webm'});
-            var url = window.URL.createObjectURL(blob);
-            var a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = fname;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(function() {
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            }, 100);
-        };
+        const blob = new Blob(recordedBlobs, {type: 'video/webm'});
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = fname;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 100);
+    };
+    
+    //録画をストップさせる関数
+    function stopRecording(){
         mediaRecorder.stop();
     }
 
