@@ -137,8 +137,8 @@
     }
 
     button_RecordStop.addEventListener('click', function(){
-        stopRecording();
         clearInterval(IntervalID);
+        stopRecording();
         $("#recordStop").prop("disabled",true);//停止ボタンを押せるようにする
         $("#recordStart").prop("disabled",false);//録画ボタンを押せないようにする
         $("#PCname").prop("disabled",false)// 録画停止したらPC名を変更できるようにする
