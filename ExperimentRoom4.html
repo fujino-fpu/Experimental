@@ -140,6 +140,10 @@
     function _canvasUpdate() {
         const videoElm = document.getElementById('my-video');
         ctx.drawImage(videoElm, 0,0,640,480)
+        var now = new Date();
+        var time = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
+        ctx.font = "30px Arial";
+        ctx.fillText(time, 10, 50); // 時刻を描画
         requestAnimationFrame(_canvasUpdate);
     }
     _canvasUpdate();
