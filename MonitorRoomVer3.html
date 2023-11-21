@@ -329,8 +329,15 @@ $(document).ready(function(){
             }
         });
 
+        //Canvasに現在時刻の時間を書き込む
+        var now = new Date();
+        var time = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
+        ctx.font = "30px Arial";
+        ctx.fillText(time, 10, 50); // 時刻を描画
+
         requestAnimationFrame(_canvasUpdate);
     };
+
 
 
 //************************************
