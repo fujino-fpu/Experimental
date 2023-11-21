@@ -142,7 +142,7 @@
     function stopRecording(){
         mediaRecorder.onstop = function(e){
             var DateStr = getDateString();
-            var fname = DateStr["y"]+"_"+DateStr["m"]+"_"+DateStr["d"]+"_"+DateStr["h"]+"_"+DateStr["min"];
+            var fname = DateStr["y"]+"_"+DateStr["m"]+"_"+DateStr["d"]+"_"+DateStr["h"]+"_"+DateStr["min"]_+DateStr["sec"];
 
             var blob = new Blob(recordedBlobs, {type: 'video/webm'});
             var url = window.URL.createObjectURL(blob);
@@ -167,7 +167,8 @@
         var d = currentdate.getDate();
         var h = currentdate.getHours()
         var min = currentdate.getMinutes();
-        var obj = {y:y, m:m, d:d,h:h,min:min};
+        var sec = currentdate.getSeconds();
+        var obj = {y:y, m:m, d:d,h:h,min:min,sec:sec};
         return obj;
     }
 
