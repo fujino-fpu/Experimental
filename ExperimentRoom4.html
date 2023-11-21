@@ -149,7 +149,7 @@
         mediaRecorder.onstop = function(e){
             var DateStr = getDateString();
             var PCname = document.getElementById("PCname").value;
-            var fname = PCname+"_"+["y"]+"_"+DateStr["m"]+"_"+DateStr["d"]+"_"+DateStr["h"]+"_"+DateStr["min"]_+DateStr["sec"];
+            var fname = PCname+"_"+["y"]+"_"+DateStr["m"]+"_"+DateStr["d"]+"_"+DateStr["h"]+"_"+DateStr["min"]+DateStr["sec"];
 
             var blob = new Blob(recordedBlobs, {type: 'video/webm'});
             var url = window.URL.createObjectURL(blob);
