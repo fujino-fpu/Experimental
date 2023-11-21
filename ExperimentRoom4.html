@@ -99,7 +99,7 @@
             videoElm.play();
 
             $("#local-Start").prop("disabled",true);//スタートすると「スタート」ボタンは押せなくする。
-            $("#local_stop").prop("disabled",false);//ローカルストップボタンを押せるようにする
+            $("#local-Stop").prop("disabled",false);//ローカルストップボタンを押せるようにする
             $("#make-call").prop("disabled",false);//最初「参加」ボタンは押せないが、メディアストリームが取得できるとボタンを押せるようになる
             $("#recordStart").prop("disabled",false);//録画ボタンを押せるようにする
 
@@ -120,7 +120,7 @@
             track.stop();
          });
         $("#local-Start").prop("disabled",false);//スタートすると「スタート」ボタンは押せなくする
-        $("#local_stop").prop("disabled",true);//ローカルストップボタンを押せるようにする
+        $("#local-Stop").prop("disabled",true);//ローカルストップボタンを押せるようにする
         $("#make-call").prop("disabled",true);//最初「参加」ボタンは押せないが、メディアストリームが取得できるとボタンを押せるようになる
     });
 
