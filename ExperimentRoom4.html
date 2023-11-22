@@ -263,6 +263,13 @@
         //$("#my-video").pause();
         $("#make-call").prop("disabled",true);//参加ボタンを押せなくする
         $("#leave-call").prop("disabled",false);//退出ボタンを押せるようにする
+
+        // 録画を開始させる。
+        if(window.confirm("録画も同時にスタートさせますか？")){
+            button_RecordStart.click();
+        }
+
+
      };
 
     // イベントリスナを設置する関数 
