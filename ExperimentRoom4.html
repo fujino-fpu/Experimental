@@ -259,17 +259,14 @@
         
         const DateStr = getDateString();
         let myid = document.getElementById("PCname").value + "_"+DateStr["h"]+"_"+DateStr["min"]+"_"+DateStr["sec"];//PC名取得して、それに時刻を書きくわえたものををIDにする
-        async function BuildPeer(myid) {
-            let peer = new Peer(myid,{
-                key: '5a37ac2c-1e41-4162-8ed7-c2ca8e4a712c',
-                debug: 3
-            });
-            return peer;
-        }
-        const peer = await BuildPeer(myid);
-
-        const room = peer.joinRoom('FujinoLabsExperimentalRoom2', {mode:'mesh', stream: localStream});
-        setupCallEventHandlers(room)
+        let peer = new Peer(myid,{
+            key: '5a37ac2c-1e41-4162-8ed7-c2ca8e4a712c',
+            debug: 3
+        });
+        peer.on("open",()=>{
+            const room = peer.joinRoom('FujinoLabsExperimentalRoom2', {mode:'mesh', stream: localStream});
+            setupCallEventHandlers(room)
+        });
 
         $("#local-Start").prop("disabled",true);//スタートボタンを押せなくする
         $("#local-Stop").prop("disabled",true);//ストップボタンを押せなくする
