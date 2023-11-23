@@ -10,19 +10,23 @@
 <body>
     <video id="my-video" width="400px"  playsinline></video>
     <div id="controller">
-        <select sie=10 id = "VideoList">
-            <option value="0">不使用</option>
-        </select> 
-        <select sie=10 id = "AudioList">
-            <option value="0">不使用</option>
-        </select>
-        <input type="checkbox" id="Check_AudioOut">管理側からの音声を出力する</input>
-        <button id="local-Start">ローカルスタート</button> 
-        <button id="local-Stop" disabled>ローカルストップ</button> 
-        <button id="make-call" disabled>参加</button>
-        <button id="leave-call" disabled>退出</button>
         <div style="margin-top: 10px;">
-            PC名: <input type="text" id = "PCname" value="PC名をつけてください"></input>
+            <select sie=10 id = "VideoList">
+                <option value="0">不使用</option>
+            </select> 
+            <select sie=10 id = "AudioList">
+                <option value="0">不使用</option>
+            </select>
+            <button id="local-Start">ローカルスタート</button> 
+            <button id="local-Stop" disabled>ローカルストップ</button>         
+        </div>
+        <div style="margin-top: 10px;">
+            PC名: <input type="text" id = "PCname" ></input>
+            <input type="checkbox" id="Check_AudioOut">管理側からの音声を出力する</input>
+            <button id="make-call" disabled>参加</button>
+            <button id="leave-call" disabled>退出</button>    
+        </div>
+        <div style="margin-top: 10px;">
             1ファイルの動画の長さ: <input type="number" id = "MovieLength" value=20>分</input>
             <button id="recordStart" disabled>ローカル録画</button>
             <button id="recordStop" disabled>ローカル録画停止</button>
@@ -198,7 +202,7 @@
         $("#recordStop").prop("disabled",true);//停止ボタンを押せるようにする
         $("#recordStart").prop("disabled",false);//録画ボタンを押せないようにする
         $("#PCname").prop("disabled",false)// 録画停止したらPC名を変更できるようにする
-
+        $("#MovieLength").prop("disabled",false)// 録画スタートしたら1ファイルの長さを変更できなくする
     });
 
     //メディアレコーダがストップしたときに発生するイベント
@@ -227,6 +231,7 @@
         mediaRecorder.stop();
     }
 
+    //日付時刻を取得して辞書型で返す関数
     function getDateString(){
         var currentdate = new Date();
         var y = currentdate.getFullYear();
@@ -242,22 +247,28 @@
 /****
  * skywayの接続処理
  * ******/
-
-    let peer;
-    let myid = "Exp_"+Date.now();
-    peer = new Peer(myid,{
-        key: '5a37ac2c-1e41-4162-8ed7-c2ca8e4a712c',
-        debug: 3
-    });  
-
+    //let peer;
+    //let myid = "Exp_"+Date.now();
  
     // Room参加処理
     document.getElementById('make-call').onclick = () => {
-        $("#local-Start").prop("disabled",true);//スタートボタンを押せなくする
-        $("#local-Stop").prop("disabled",true);//ストップボタンを押せなくする
+        if(!document.getElementById("PCname").value){
+            window.alert("PC名をセットしてください")
+            return;
+        }
+        
+        const DateStr = getDateString();
+        let myid = document.getElementById("PCname").value + "_"+DateStr["h"]+"_"+DateStr["min"]+"_"+DateStr["sec"];//PC名取得して、それに時刻を書きくわえたものををIDにする
+        peer = new Peer(myid,{
+            key: '5a37ac2c-1e41-4162-8ed7-c2ca8e4a712c',
+            debug: 3
+        });  
 
         const room = peer.joinRoom('FujinoLabsExperimentalRoom2', {mode:'mesh', stream: localStream});
         setupCallEventHandlers(room)
+
+        $("#local-Start").prop("disabled",true);//スタートボタンを押せなくする
+        $("#local-Stop").prop("disabled",true);//ストップボタンを押せなくする
         $("#my-video").prop("hidden",true);
         $("#my-video").prop("muted",true);
         //$("#my-video").pause();
