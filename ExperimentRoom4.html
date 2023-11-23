@@ -248,7 +248,7 @@
  * skywayの接続処理
  * ******/
     //let peer;
-    let myid; //
+    //let myid; 
  
     // Room参加処理
     document.getElementById('make-call').onclick = () => {
@@ -258,14 +258,14 @@
         }
         
         const DateStr = getDateString();
-        myid = document.getElementById("PCname").value + "_"+DateStr["h"]+"_"+DateStr["min"]+"_"+DateStr["sec"];//PC名取得して、それに時刻を書きくわえたものををIDにする
+        const myid = document.getElementById("PCname").value + "_"+DateStr["h"]+"_"+DateStr["min"]+"_"+DateStr["sec"];//PC名取得して、それに時刻を書きくわえたものををIDにする
         const peer = new Peer(myid,{
             key: '5a37ac2c-1e41-4162-8ed7-c2ca8e4a712c',
             debug: 3
         });
         peer.on("open",()=>{
             const room = peer.joinRoom('FujinoLabsExperimentalRoom2', {mode:'mesh', stream: localStream});
-            setupCallEventHandlers(room)
+            setupCallEventHandlers(room, myid)
         });
 
         $("#local-Start").prop("disabled",true);//スタートボタンを押せなくする
@@ -285,7 +285,7 @@
      };
 
     // イベントリスナを設置する関数 
-    function setupCallEventHandlers(room){
+    function setupCallEventHandlers(room, myid){
         room.on('open',()=>{
             const textDom = $("<p>");
             textDom.attr("id", myid)
@@ -337,11 +337,11 @@
         $("#my-video").prop("muted",false);//自分のビデオの声のミュートを解除する（あくまで自分のPC上でだけ） 
 
         //再接続するときのために、peerを再度作っておく
-        myid = "Exp_"+Date.now();
-        peer = new Peer(myid,{
-            key: '5a37ac2c-1e41-4162-8ed7-c2ca8e4a712c',
-            debug: 3
-        });  
+        // myid = "Exp_"+Date.now();
+        // peer = new Peer(myid,{
+        //     key: '5a37ac2c-1e41-4162-8ed7-c2ca8e4a712c',
+        //     debug: 3
+        // });  
     });
 });
 </script>
