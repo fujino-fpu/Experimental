@@ -250,17 +250,8 @@
     //let peer;
     //let myid = "Exp_"+Date.now();
  
-    //peer 作成関数
-    async function BuildPeer(myid) {
-        peer = new Peer(myid,{
-            key: '5a37ac2c-1e41-4162-8ed7-c2ca8e4a712c',
-            debug: 3
-        });
-        return peer;
-    }
-
     // Room参加処理
-    document.getElementById('make-call').onclick = () => {
+    document.getElementById('make-call').onclick = async() => {
         if(!document.getElementById("PCname").value){
             window.alert("PC名をセットしてください")
             return;
@@ -268,7 +259,15 @@
         
         const DateStr = getDateString();
         let myid = document.getElementById("PCname").value + "_"+DateStr["h"]+"_"+DateStr["min"]+"_"+DateStr["sec"];//PC名取得して、それに時刻を書きくわえたものををIDにする
-        let peer = await BuildPeer(myid;)
+        async function BuildPeer(myid) {
+            let peer = new Peer(myid,{
+                key: '5a37ac2c-1e41-4162-8ed7-c2ca8e4a712c',
+                debug: 3
+            });
+            return peer;
+        }
+        const peer = await BuildPeer(myid);
+
         const room = peer.joinRoom('FujinoLabsExperimentalRoom2', {mode:'mesh', stream: localStream});
         setupCallEventHandlers(room)
 
