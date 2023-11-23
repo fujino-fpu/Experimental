@@ -247,7 +247,7 @@
 /****
  * skywayの接続処理
  * ******/
-    //let peer;
+    let peer;
     //let myid; 
  
     // Room参加処理
@@ -259,7 +259,7 @@
         
         const DateStr = getDateString();
         const myid = document.getElementById("PCname").value + "_"+DateStr["h"]+"_"+DateStr["min"]+"_"+DateStr["sec"];//PC名取得して、それに時刻を書きくわえたものををIDにする
-        const peer = new Peer(myid,{
+        peer = new Peer(myid,{
             key: '5a37ac2c-1e41-4162-8ed7-c2ca8e4a712c',
             debug: 3
         });
