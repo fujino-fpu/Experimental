@@ -318,9 +318,9 @@
         room.on('peerLeave', peerId=>{
             //退出したことを報告
             const peerDom = $("<p>");
-            peerDom.text(stream.peerId + " leaved now.");
+            peerDom.text(peerId + " leaved now.");
             $('#RoomContents').append(peerDom);  
-            if(stream.peerId.indexOf("Exp_")!=-1){
+            if(peerId.indexOf("Exp_")!=-1){
                 $("#"+peerId).remove();
             } 
         });
