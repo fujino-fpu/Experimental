@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.webrtc.ecl.ntt.com/skyway-4.4.2.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <title>モニター用SkyWay2</title>
+  <!-- <style>
+      video {visibility: hidden;}
+  </style> -->
+</head>
+<body>
+    <video id="my-video" width="400px" autoplay  playsinline muted></video>
+    <div id="controller">
+        <P>
+            <select sie=10 id = "Select_VideoList"></select> 
+            <select sie=10 id = "Select_AudioList"></select> 
+            <button id="Button_local-Start">スタート</button> 
+            <button id="Button_make-call" disabled>参加</button>
+            <button id="Button_leave-call" disabled>退出</button>
+        </P>
+        <p>
+            <input type="checkbox" id = "check-my-video-invisible" >自分のビデオを非表示する（自分のPC上でのみ）
+            <input type="checkbox" id = "check-my-audio-mute" checked>自分の音声をミュートする（自分のPC上でのみ）
+        </p>
+        <p>
+            <textarea id = "textarea_Skyway_log" readonly style="width: 400px; height:100px;resize: none;"></textarea>
+        </p>
+    </div>
+    <div id ="RecordControl">
+        <div>
+            <input type="radio" id="SoundOFFVideo" name="SoundSlect" value="SoundOff" />
+            <label for="SoundOFFVideo">音声なし録画</label> 
+            <input type="radio" id="SoundOnVideo" name="SoundSlect" value="SoundOn" disabled="true"/>
+            <label for="SoundOnVideo">音声付き録画</label> 
+        </div>
+        <button id="Button_record" disabled="true">録画</button>
+        <button id="Button_recordstop" disabled="true">停止</button>
+    </div> 
+    <div id = "Canvas">
+        <canvas id="canvas"></canvas>
+    </div>
+    <div id="RoomContents"></div>
+</body>
+
+<script>
+$(document).ready(function(){
+//*****************
+//skyway を使ったSFUhRoom通信のスクリプト
+//Ver.3 : カメラのリストとマイクのリストを選択形式にして表示して、それをもとに選べるようにする。
+//***************** 
+    let localStream; //自分のストリーム
+    
+    // 自分のカメラ映像取得出力
+    //まずは使用するデバイスを設定する
+    let vidList = new Array();
+    let audList = new Array();
+    navigator.mediaDevices.enumerateDevices().then(function(devices) {
+        devices.forEach(function(device) {
+            //console.log(device.kind + ": " + device.label + " id = " + device.deviceId);
+            if(device.kind == "videoinput"){// && device.label.indexOf("Logicool")!=-1){
+                vidList[device.label] = device.deviceId;
+                $("#Select_VideoList").append($("<option>").html(device.label).val(device.deviceId))
+            }
+            
+            if(device.kind == "audioinput"){
+                audList[device.label] = device.deviceId;
+                $("#Select_AudioList").append($("<option>").html(device.label).val(device.deviceId))
+            } 
+        });
+        console.log(vidList);
+        console.log(audList);
+        $("#Select_VideoList").append($('<option value="0">不使用</option>'));
+        $("#Select_AudioList").append($('<option value="0">不使用</option>'));
+    }).catch(function(err) {
+        console.log("デバイスリストを取得できませんでした");
+        alert("デバイスリストを取得できませんでした");
+    });
+
+    //指定したデバイスで自分の動画・音声を取得
+    $("#Button_local-Start").on("click", async function() {
+        const videoElm = document.getElementById('my-video');
+        videoElm.pause();
+
+        let constraints = {
+            video:{deviceId: $("#Select_VideoList").val(), width:{ideal:1280, min:640}, height:{ideal:720, min:480}},
+            audio:{deviceId: $("#Select_AudioList").val(), echoCancellation:true, noiseSuppression:true}
+        }
+        if($("#Select_VideoList").val()==0){
+            constraints["video"]=false;
+        }
+        if($("#Select_AudioList").val()==0){
+            constraints["audio"]=false;
+        }
+        if(constraints["audio"]==false && constraints["video"]==false){
+            alert("ビデオカメラ、マイクの両方が不使用になっています。少なくともいずれか一つは有効にしてください"); 
+            $("#Button_make-call").prop("disabled",true);//最初「参加」ボタンは押せないが、メディアストリームが取得できるとボタンを押せるようになる
+            return;
+        }
+
+        try{
+            localStream = await navigator.mediaDevices.getUserMedia(constraints);     
+            videoElm.srcObject = localStream;
+            videoElm.play();
+            $("#Button_make-call").prop("disabled",false);//最初「参加」ボタンは押せないが、メディアストリームが取得できるとボタンを押せるようになる
+            if(constraints["video"]!=false){
+                console.log(localStream.getVideoTracks()[0].getSettings().width);
+                console.log(localStream.getVideoTracks()[0].getSettings().height);
+            }
+        }
+        catch(error){
+                    // 失敗時にはエラーログを出力
+                console.error('mediaDevice.getUserMedia() error:', error);          
+                return;
+        }
+    })
+
+
+    //自分のビデオを非表示にする（あくまで自分のPCでだけ）  
+    $("#check-my-video-invisible").change(function(){
+        $("#my-video").prop("hidden", $("#check-my-video-invisible").prop("checked"));
+    });
+
+    //自分のビデオの声をミュートする（あくまで自分のPC上でだけ）
+    $("#check-my-audio-mute").change(function(){
+        $("#my-video").prop("muted",
+                            $("#check-my-audio-mute").prop("checked"));
+    });
+
+/******
+ * Skyway 参加処理
+ * *****/
+    let peersList = new Array();
+    let remoteStreams = new Array();
+    //Peer作成
+    let peer;
+    let myid = "monitor_"+Date.now();
+    peer = new Peer(myid,{
+        key: '5a37ac2c-1e41-4162-8ed7-c2ca8e4a712c',
+        debug: 3
+    });  
+
+    // Room参加処理
+    document.getElementById('Button_make-call').onclick = () => {
+        const room = peer.joinRoom('FujinoLabsExperimentalRoom2', {mode:'mesh', stream: localStream});
+        setupCallEventHandlers(room);
+        
+        $("#Button_local-Start").prop("disabled",true);//スタートボタンを押せなくする
+        $("#Button_make-call").prop("disabled",true);//参加ボタンを押せないようにする
+        $("#Button_leave-call").prop("disabled",false);//退出ボタンを押せるようにする
+     };
+
+    //退出をクリックする
+    $("#Button_leave-call").on("click",function(){
+        peer.destroy();
+        peersList = new Array();
+        remoteStreams = new Array();
+        $('#RoomContents').empty();
+        $("#Button_leave-call").prop("disabled",true);//退出ボタンを押せないようにする
+        $("#Button_local-Start").prop("disabled",false);//スタートボタンを押せるようにする
+        $("#my-video").prop("hidden",false);//自分のビデオを表示にする
+        $("#my-video").prop("muted",false);//自分のビデオの声のミュートを解除する（あくまで自分のPC上でだけ） 
+        $("#Button_make-call").prop("disabled",false);//「参加」ボタンは押せるようにする
+        $("#Button_record").prop("disabled",true);//録画ボタンを押せないようにする
+        var ctx = $("#canvas").get(0).getContext('2d');//Canvasをクリア
+        ctx.clearRect(0, 0, ctx.canvas.clientWidth, ctx.canvas.clientHeight);
+        $("#P_"+myid).remove();//自分のid表示をクリア
+        $("#textarea_Skyway_log").val("");//入室記録をクリア
+        //再接続するときのために、peerを再度作っておく
+        myid = "monitor_"+Date.now();
+        peer = new Peer(myid,{
+            key: '5a37ac2c-1e41-4162-8ed7-c2ca8e4a712c',
+            debug: 3
+        });  
+    });
+    // イベントリスナを設置する関数 
+    function setupCallEventHandlers(room){
+        room.on('open',()=>{
+            const textDom = $("<p>");
+            textDom.attr("id", "P_"+peer.id)
+            textDom.text("OpenRoom. my id is "+ peer.id);
+            $('#controller').append(textDom);
+            $('Button_make-call').text("参加中");
+            $('Button_make-call').prop("disabled",true);
+        });//roomがオープンになった時の処理
+
+        room.on('peerJoin', peerId =>{       
+        });//peerが入室してきたときの処理
+
+        room.on('stream', stream =>{//新しいstreamが入ってくる毎に実行される。streamはpeer.idが振られている。
+            //ピアの状況をHTMLに記載する
+            var DateTime = getDateString();
+            var strDateTime = DateTime["y"]+"/"+DateTime["m"]+"/"+DateTime["d"]+" "+DateTime["h"]+":"+DateTime["min"];
+            var strlog = strDateTime + " " + stream.peerId + " joined now.\n";
+            $("#textarea_Skyway_log").val($("#textarea_Skyway_log").val()+strlog ); 
+            
+            if(stream.peerId.indexOf("monitor")!=-1){//モニター端末                  
+
+            }else{//実験室端末からの動画
+                //動画を追加する video要素のid はpeeridにする
+                const videoDom =$('<video autoplay hidden>');//muted style="visibility: hidden;"
+                videoDom.get(0).srcObject=stream;  //videoDom.get(0).srcObject= new MediaStream( stream.getVideoTracks()); これだと動画だけがきて音声が来ない
+                videoDom.get(0).id = stream.peerId;
+                videoDom.width(640);
+                videoDom.height(480); //高さは480で固定にしよう
+
+                $('#RoomContents').append(videoDom);
+                //videoDom.play();
+
+                //ストリームを連想配列の形で保存
+                remoteStreams[stream.peerId] = stream;
+
+                //idをリストpeerListに保存
+                peersList.push(stream.peerId);
+
+                //キャンバスのサイズを変更
+                canvasResize(peersList);
+
+                ///録画ボタンが押せないなら押せるようにする/
+                if( $("#Button_record").prop("disabled")==true ){
+                    $("#Button_record").prop("disabled",false);
+                };//録画ボタンをおせるようにする
+
+                if(stream.getAudioTracks().length!=0){//streamに音声が含まれていれば音声付き録画をできるようにする。
+                    console.log("音声トラック取得");
+                    $("#SoundOnVideo").prop("disabled",false);//音声入力があった場合に限り音声あり録画を可能にする
+                }
+
+            }
+            // //videoをミュートしても、以下のコードを有効化してると、ストリームから直接、音がスピーカに飛ぶ。
+            //const AudioContext = window.AudioContext || window.webkitAudioContext;
+            //const audioContext = new AudioContext();
+            //const track = audioContext.createMediaStreamSource(stream);
+            //track.connect(audioContext.destination);
+
+
+        });//streamが入ってきたときの処理
+
+        room.on('peerLeave', peerId=>{//Peerが退出した時の処理
+            //video要素を削除
+            $("#"+peerId).remove();
+
+            //remoteStreamsのリストからストリームを削除
+            delete remoteStreams[peerId]
+            console.log(remoteStreams)
+
+            //peerListから削除
+            peersList.splice( peersList.indexOf(peerId), 1);
+            console.log(peersList);
+            //peerがいなくなったときには録画を押せないようにする
+            if(peersList.length == 0){
+                $("#Button_record").prop("disabled",true);//録画ボタンを押せないようにする               
+            }
+
+            //キャンバスのサイズを変更
+            canvasResize(peersList);
+            
+            //退出したことを報告 
+            var DateTime = getDateString();
+            var strDateTime = DateTime["y"]+"/"+DateTime["m"]+"/"+DateTime["d"]+" "+DateTime["h"]+":"+DateTime["min"];
+            var strlog = strDateTime + " " + peerId + " leaved now.\n";
+            //$('#RoomContents').append(peerDom);
+            $("#textarea_Skyway_log").val($("#textarea_Skyway_log").val()+strlog ); 
+
+            //残ったPeerのストリームに音声がついてるかどうかを確認して、ついていなければ音声付き録画のチェックをできないようにする
+            var f_SoundOFFVideo=true;
+            for(var i=0; i<peersList.length();i++){
+                if(remoteStreams[i].getAudioTracks().length!=0){
+                    f_SoundOFFVideo=false;//音声入力がまだあった場合に限り音声あり録画を可能にする 
+                }
+            }
+            $("#SoundOnVideo").prop("disabled",f_SoundOFFVideo);                   
+
+        });
+    }
+
+
+
+//*************************
+//SFURoomで飛んでくる各ストリームを1つにまとめてCanvasに描画する
+//*************************
+    // let canvas;
+    // let canvasCtx;
+    // canvas = document.createElement('canvas');
+    // canvas.id="canvas";
+    // $('#Canvas').append(canvas);
+    let canvas = document.getElementById("canvas");
+
+    function canvasResize( _peerslist){
+        canvas.width = 0;
+        canvas.height=0;
+        //canvas.width = $("#my-video").width();
+        //canvas.height= $("#my-video").height();
+        
+        //予めキャンバスの大きさを設定する必要がある。
+        _peerslist.forEach(peerId=>{
+            var videoid = "#"+peerId;
+            if($(videoid).get(0)!=null){ //参考　https://qiita.com/mitsuhiro_K/items/7d5cef1f4316c2080fa7
+                canvas.width = canvas.width + $(videoid).width();
+                if(canvas.height < $(videoid).height()){
+                    canvas.height = $(videoid).height();
+                }
+            }
+        });
+
+    }
+
+    //Canvasにビデオを描画する
+    _canvasUpdate();
+    function _canvasUpdate() {
+        var canvasCtx = canvas.getContext('2d');
+
+        var prevwidth = 0;
+        // 自分の動画もCanvasに書き込む
+        // canvasCtx.drawImage($("#my-video").get(0), 0, 0, $("#my-video").width(), $("#my-video").height());
+        // prevwidth += $("#myvideo").width();
+
+        //Canvasに動画を順次描いていく
+        peersList.forEach(peerId=>{
+            var videoid = "#"+peerId;
+            if($(videoid).get(0)!=null){ //参考　https://qiita.com/mitsuhiro_K/items/7d5cef1f4316c2080fa7               
+                canvasCtx.drawImage($(videoid).get(0),prevwidth, 0, $(videoid).width(), $(videoid).height());
+                prevwidth +=  $(videoid).width();
+                //const settings = $(videoid).get(0).getVideoTracks()[0].getSettings();
+                //console.log(settings);
+                //$("#p_video1Settings").text(settings["frameRate"]);
+                canvasCtx.font = "30px Arial";
+                canvasCtx.fillText(peerId, prevwidth- $(videoid).width()/2,50)
+            }
+        });
+
+        //Canvasに現在時刻の時間を書き込む
+        var now = new Date();
+        var time = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
+        canvasCtx.font = "30px Arial";
+        canvasCtx.fillText(time, 10, 50); // 時刻を描画
+
+        requestAnimationFrame(_canvasUpdate);
+    };
+
+
+
+//************************************
+//  録画処理
+//************************************
+    //録画スタートボタン
+    $("#Button_record").on("click", function(){
+        if(!$("#SoundOFFVideo").prop("checked") && !$("#SoundOnVideo").prop("checked")){
+            alert("音声ありか、音声なしかを選択してください");
+            return;
+        }
+        mixVideoAudio();
+        if(startRecording()){
+            $("#Button_record").text("録画中");
+            $("#Button_record").prop("disabled",true);
+            $("#Button_recordstop").prop("disabled",false);
+        }
+    });
+
+    //録画停止ボタン
+    $("#Button_recordstop").on("click", function(){
+        $("#Button_record").text("録画");
+        $("#Button_record").prop("disabled",false);
+        $("#Button_recordstop").prop("disabled",true);
+        stopRecording();
+        download();
+    });
+
+
+
+    //キャンバスのストリームと音声のストリームをmixする処理
+    let mixedVideo;
+    let audiodest;//どういう仕組みかはわからないが、audiodestを関数内のローカル変数にすると音が保存されなかった。
+    //考えられるのは、単純に根本のstreamのトラックのポインタを渡しあってるわけではなく、destintationという形を実体を伴ったノードを作って
+    //そのノードからトラックを渡してるので、関数スコープが終わり、ノードそのものが無くなると、トラックのポインタを保存する実体がなくなるので
+    //トラックのポインタ取れなくなるということかな。うーんわかったようなわからんような・・・・苦笑
+    function mixVideoAudio(){
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioContext = new AudioContext();
+        mixedVideo = new MediaStream();
+        mixedVideo.addTrack(canvas.captureStream(25).getTracks()[0]);//CanvasのストリームをMixedVideoに追加
+        
+        // //*******
+        // //以下に音声を各動画から取得するコードを書く
+        // //*******
+        audiodest= audioContext.createMediaStreamDestination();
+        peersList.forEach(function(peerId){
+            var stream = remoteStreams[peerId];
+            if(stream.getAudioTracks().length!=0){
+                console.log("音声トラック取得");
+                const source0 = audioContext.createMediaStreamSource(stream);
+                source0.connect(audiodest);//.connect(audioContext.destination);//
+            }
+        });
+
+        //MixedVideoにAudioDistのストリームを追加
+        mixedVideo.addTrack(audiodest.stream.getAudioTracks()[0]);
+
+    }
+
+    //録画処理
+    var mediaRecorder;
+    var recordedBlobs;
+    function startRecording() {
+        var options = {mimeType: 'video/webm;codecs=vp9', audioBitsPerSecond: 128000, videoBitsPerSecond : 1000000};//音は128kbps、映像は1Mbps
+        recordedBlobs = [];
+
+        var stream;
+        if($("#SoundOFFVideo").prop("checked")){
+            if (window.confirm("音声なしで録画をします。よろしいですか")) {
+                stream = canvas.captureStream(25);//<----ここを音声付き動画ストリームに書き換えればよい。Canvasだけだと音声はつかない
+                console.log("音声なし録画スタート");
+            }else {
+                // ユーザーがキャンセルをクリックした時の処理
+                console.log("キャンセルがクリックされました。");
+                return 0;
+            }
+        }else if($("#SoundOnVideo").prop("checked")){
+            if (window.confirm("音声付きで録画をします。よろしいですか")) {
+                stream = mixedVideo;//<----ここを音声付き動画ストリームに書き換えればよい。Canvasだけだと音声はつかない
+                console.log("音声付き録画スタート");
+            }else {
+                // ユーザーがキャンセルをクリックした時の処理
+                console.log("キャンセルがクリックされました。");
+                return 0;
+            }
+        }
+        //var stream = canvas.captureStream(25);//<----ここを音声付き動画ストリームに書き換えればよい。Canvasだけだと音声はつかない
+        //var stream = mixedVideo;//<----ここを音声付き動画ストリームに書き換えればよい。Canvasだけだと音声はつかない
+        try {
+            mediaRecorder = new MediaRecorder(stream, options);
+        } catch (e0) {
+            console.log('Unable to create MediaRecorder with options Object: ', options, e0);
+            try {
+                options = {mimeType: 'video/webm;codecs=vp8', audioBitsPerSecond: 128000, videoBitsPerSecond : 1000000};
+                mediaRecorder = new MediaRecorder(stream, options);
+            } catch (e1) {
+                console.log('Unable to create MediaRecorder with options Object: ', options, e1);
+                try {
+                    mediaRecorder = new MediaRecorder(stream);
+                } catch (e2) {
+                    alert('MediaRecorder is not supported by this browser.');
+                    console.log('Unable to create MediaRecorder', e2);
+                    return;
+                }
+            }
+        }
+        console.log('Created MediaRecorder', mediaRecorder, 'with options', options);
+        mediaRecorder.ondataavailable = handleDataAvailable;
+        mediaRecorder.start(10); // collect 10ms of data
+        console.log('MediaRecorder started', mediaRecorder);
+        return 1;
+    }
+
+
+    function handleDataAvailable(event) {
+        if (event.data && event.data.size > 0) {
+            recordedBlobs.push(event.data);
+        }
+    }
+
+    function stopRecording(){
+        mediaRecorder.stop();
+    }
+
+    function download(){
+        var DateStr = getDateString();
+        var fname = DateStr["y"]+"_"+DateStr["m"]+"_"+DateStr["d"]+"_"+DateStr["h"]+"_"+DateStr["min"];
+
+        var blob = new Blob(recordedBlobs, {type: 'video/webm'});
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = fname;//'test.webm';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 100);
+    }
+
+    function getDateString(){
+        var currentdate = new Date();
+        var y = currentdate.getFullYear();
+        var m = currentdate.getMonth();
+        var d = currentdate.getDate();
+        var h = currentdate.getHours()
+        var min = currentdate.getMinutes();
+        var obj = {y:y, m:m, d:d,h:h,min:min};
+        return obj;
+    }
+
+});
+</script>
+
+</html>
