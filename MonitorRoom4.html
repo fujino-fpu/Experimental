@@ -265,7 +265,7 @@ $(document).ready(function(){
 
             //残ったPeerのストリームに音声がついてるかどうかを確認して、ついていなければ音声付き録画のチェックをできないようにする
             var f_SoundOFFVideo=true;
-            for(var i=0; i<peersList.length();i++){
+            for(var i=0; i<peersList.length;i++){
                 if(remoteStreams[i].getAudioTracks().length!=0){
                     f_SoundOFFVideo=false;//音声入力がまだあった場合に限り音声あり録画を可能にする 
                 }
