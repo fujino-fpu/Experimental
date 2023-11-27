@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Word Comparison Game</title>
+</head>
+<body>
+  <div id="gameArea">
+    <div id="questionArea" hidden>
+      <P id="question">以下の単語のどちらがあなたが見た単語ですか？</P>
+      <P id="WordA"></P>
+      <P id="WordB"></P>
+    </div>
+    <div id="startArea">
+      名前を入力してください<input type = "text" id="Name"></input>
+      <button id="startButton">Start</button>
+    </div>
+    <button id="nextButton" hidden>Next</button>
+    <button id="endButton" style="display: none;">終了</button>
+    <div id="resultArea" style="display: none;">
+      <h2>結果</h2>
+      <ul id="resultList"></ul>
+    </div>
+  </div>
+
+  <script>
+    const listA = ['GVTIZB','RYPJWOQ','FDNLK','UXQBJ','EYCUMDL','SZKIQX','HFWAGL','VNYMC','LOXED','RJPYQNS'];
+    const listB = ['XZPKQM','BFTVYWU','OQNDL','AGJRE','LUFWEDV','HXMNZA','SJVIYF','CPWIB','KTZNE','RMLQGDA'];
+    const wordsCount = listA.length;
+
+    let currentWordIndex = 0;
+    let startTime, endTime;
+    const results = [];
+
+    const questionArea = document.getElementById('questionArea');
+    const startButton = document.getElementById('startButton');
+    const nextButton = document.getElementById('nextButton');
+    const endButton = document.getElementById('endButton');
+    const resultArea = document.getElementById('resultArea');
+    const resultList = document.getElementById('resultList');
+    const p_wordA = document.getElementById("WordA");
+    const p_wordB = document.getElementById("WordB");
+    const input_Name=document.getElementById("Name");
+    const startArea = document.getElementById("startArea");
+
+    startButton.addEventListener('click', startGame);
+    nextButton.addEventListener('click', showNextWord);
+    endButton.addEventListener('click', saveResults);
+
+    function startGame() {
+      startArea.hidden = true;
+      startButton.style.display = 'none';
+      //nextButton.style.display = 'block';
+      nextButton.hidden = true;
+      questionArea.hidden=false;
+      askQuestion();
+      startTime = new Date().getTime();
+    }
+
+    function askQuestion() {   
+      if (currentWordIndex < wordsCount) {
+        const wordA = listA[currentWordIndex];
+        const wordB = listB[currentWordIndex];
+        p_wordA.style.fontWeight="normal";
+        p_wordB.style.fontWeight="normal";
+        p_wordA.innerText=`A: ${wordA}`;
+        p_wordB.innerText=`B: ${wordB}`;
+        document.addEventListener('keypress', handleKeyPress);
+      } else {
+        nextButton.style.display = 'none';
+        endButton.style.display = 'block';
+      }
+    }
+
+    function handleKeyPress(event) {
+      endTime = new Date().getTime();
+      let selectedWord;
+      if (event.code === 'Space') {
+        selectedWord = 'A';
+        document.getElementById("WordA").style.fontWeight="bold";
+
+      } else if (event.code === 'Enter') {
+        selectedWord = 'B';
+        document.getElementById("WordB").style.fontWeight="bold";
+      }
+      if (selectedWord) {
+        results.push({ word: selectedWord, time: endTime - startTime });
+        document.removeEventListener('keypress', handleKeyPress);
+        nextButton.hidden = false;
+        nextButton.focus();
+      }
+    }
+
+    function showNextWord() {
+      currentWordIndex++;
+      nextButton.hidden=true;
+      askQuestion();
+      startTime = new Date().getTime();
+    }
+
+    function saveResults() {
+      let csvContent = 'Word,Time\n';
+      results.forEach((result) => {
+        csvContent += `${result.word},${result.time}\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        var today = new Date();
+        const filename = input_Name.value + "_"+today.getFullYear() + "_"+(today.getMonth()+1)+"_"+today.getDate()+"_"+today.getHours()+"_"+today.getMinutes()+".csv"
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    }
+  </script>
+</body>
+</html>
